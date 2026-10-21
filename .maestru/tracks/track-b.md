@@ -34,5 +34,5 @@ status: active
 | B4 | Ligação MongoDB 4.4, repositórios, índices, /health e /ready | done | 2026-10-21 | developer | high | 2026-10-21 |  | B1 |  |
 | B5 | Logging estruturado sem segredos | done | 2026-10-21 | developer | medium | 2026-10-21 |  | B1 |  |
 | B6 | Pipeline de testes (pytest, Vitest) e fixtures Businessmap mock | done | 2026-10-21 | developer | medium | 2026-10-21 |  | B1, B2 |  |
-| B7 | Docs: architecture, businessmap-api-validation, metrics-definitions | backlog | 2026-10-21 | developer | medium |  |  | track-a/A1 |  |
+| B7 | Docs: architecture, businessmap-api-validation, metrics-definitions | done | 2026-10-21 | developer | medium | 2026-10-21 |  | track-a/A1 |  |
 <!-- /maestru:work-items-list -->

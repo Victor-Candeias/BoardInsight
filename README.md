@@ -478,3 +478,16 @@ O MVP está concluído quando o novo site, independente do TeamForge, corre no D
 ---
 
 **Nota final:** esta especificação define o desenvolvimento a executar; não afirma que os endpoints de cartões ou histórico já foram testados. A primeira tarefa técnica é validar esses endpoints na documentação OpenAPI da instância antes de implementar os relatórios avançados.
+
+## 20. Desenvolvimento local (BoardInsight)
+
+A documentação viva está em `.maestru/docs/` (`architecture`, `businessmap-api-validation`,
+`metrics-definitions`); os work-items em `.maestru/tracks/`.
+
+```bash
+cp .env.example .env && chmod 600 .env        # preencher MongoDB e BUSINESSMAP_API_KEY
+cd backend && python3 -m venv .venv && .venv/bin/pip install -r requirements-dev.lock && .venv/bin/pip install --no-deps -e .
+.venv/bin/uvicorn app.main:app --port 8000     # API em http://127.0.0.1:8000/api/docs
+cd ../frontend && npm ci && npm run dev         # UI em http://127.0.0.1:5180 (proxy para a API)
+scripts/test.sh                                 # testes backend + frontend
+```
