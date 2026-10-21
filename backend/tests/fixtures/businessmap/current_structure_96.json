@@ -1,0 +1,128 @@
+{
+  "data": {
+    "version": "1.0",
+    "workspace_id": 35,
+    "board_id": 96,
+    "name": "Team Board: Exemplo",
+    "description": "",
+    "is_archived": 0,
+    "workflow_order": [
+      1001
+    ],
+    "workflows": {
+      "1001": {
+        "type": 0,
+        "position": 0,
+        "is_enabled": 1,
+        "is_collapsible": 1,
+        "name": "Cards workflow",
+        "top_lanes": [
+          3001,
+          3002
+        ],
+        "bottom_lanes": [
+          3001,
+          3002
+        ],
+        "top_columns": [
+          2001,
+          2002,
+          2003,
+          2004,
+          2005,
+          2006
+        ],
+        "bottom_columns": [
+          2001,
+          2002,
+          2003,
+          2004,
+          2005,
+          2006
+        ],
+        "section_columns": {
+          "1": [
+            2001
+          ],
+          "2": [
+            2002
+          ],
+          "3": [
+            2003,
+            2004
+          ],
+          "4": [
+            2005
+          ],
+          "5": [
+            2006
+          ]
+        }
+      }
+    },
+    "lanes": {
+      "3001": {
+        "workflow_id": 1001,
+        "name": "Default Swimlane",
+        "description": "",
+        "color": "ffffff"
+      },
+      "3002": {
+        "workflow_id": 1001,
+        "name": "Expedite",
+        "description": "",
+        "color": "ff0000"
+      }
+    },
+    "columns": {
+      "2001": {
+        "workflow_id": 1001,
+        "section": 1,
+        "parent_column_id": 0,
+        "name": "Backlog",
+        "limit": 0,
+        "flow_type": 1
+      },
+      "2002": {
+        "workflow_id": 1001,
+        "section": 2,
+        "parent_column_id": 0,
+        "name": "To Do",
+        "limit": 0,
+        "flow_type": 2
+      },
+      "2003": {
+        "workflow_id": 1001,
+        "section": 3,
+        "parent_column_id": 0,
+        "name": "Em curso",
+        "limit": 5,
+        "flow_type": 1
+      },
+      "2004": {
+        "workflow_id": 1001,
+        "section": 3,
+        "parent_column_id": 0,
+        "name": "Em revisão",
+        "limit": 3,
+        "flow_type": 2
+      },
+      "2005": {
+        "workflow_id": 1001,
+        "section": 4,
+        "parent_column_id": 0,
+        "name": "Done",
+        "limit": 0,
+        "flow_type": 2
+      },
+      "2006": {
+        "workflow_id": 1001,
+        "section": 5,
+        "parent_column_id": 0,
+        "name": "Ready to Archive",
+        "limit": 0,
+        "flow_type": 1
+      }
+    }
+  }
+}

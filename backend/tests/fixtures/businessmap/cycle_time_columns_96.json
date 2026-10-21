@@ -1,0 +1,18 @@
+{
+  "data": [
+    {
+      "workflow_id": 1001,
+      "name": "Cards workflow",
+      "effective_cycle_time_columns": [
+        {
+          "column_id": 2003,
+          "name": "Em curso"
+        },
+        {
+          "column_id": 2004,
+          "name": "Em revisão"
+        }
+      ]
+    }
+  ]
+}

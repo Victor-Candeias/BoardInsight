@@ -1,0 +1,22 @@
+{
+  "data": [
+    {
+      "type_id": 41,
+      "name": "Tarefa",
+      "color": "eceff1",
+      "is_enabled": 1
+    },
+    {
+      "type_id": 42,
+      "name": "Bug",
+      "color": "ff0000",
+      "is_enabled": 1
+    },
+    {
+      "type_id": 43,
+      "name": "História",
+      "color": "00ff00",
+      "is_enabled": 1
+    }
+  ]
+}

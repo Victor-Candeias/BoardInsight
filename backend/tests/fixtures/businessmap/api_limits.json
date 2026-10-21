@@ -1,0 +1,12 @@
+{
+  "data": [
+    {
+      "type": "hourly",
+      "limit": 600
+    },
+    {
+      "type": "minutely",
+      "limit": 30
+    }
+  ]
+}
