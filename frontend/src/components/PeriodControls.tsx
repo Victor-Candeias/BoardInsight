@@ -6,9 +6,10 @@ interface Props {
   setFilter: (key: string, value: string | null) => void;
   /** Período efetivo devolvido pela API (mostrado quando o URL não o define). */
   effective?: { from: string; to: string };
+  showGranularity?: boolean;
 }
 
-export function PeriodControls({ query, setFilter, effective }: Props) {
+export function PeriodControls({ query, setFilter, effective, showGranularity = true }: Props) {
   return (
     <div className="flex flex-wrap items-end gap-3">
       <div className="space-y-1">
@@ -19,14 +20,16 @@ export function PeriodControls({ query, setFilter, effective }: Props) {
         <Label htmlFor="p-to">Até</Label>
         <Input id="p-to" type="date" value={query.to ?? effective?.to ?? ""} onChange={(e) => setFilter("to", e.target.value || null)} />
       </div>
-      <div className="space-y-1">
+      {showGranularity && (
+        <div className="space-y-1">
         <Label htmlFor="p-granularity">Agrupar por</Label>
         <Select id="p-granularity" className="w-32" value={query.granularity ?? "week"} onChange={(e) => setFilter("granularity", e.target.value)}>
           <option value="day">Dia</option>
           <option value="week">Semana</option>
           <option value="month">Mês</option>
         </Select>
-      </div>
+        </div>
+      )}
     </div>
   );
 }

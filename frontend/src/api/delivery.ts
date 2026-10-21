@@ -128,3 +128,22 @@ export interface Flow {
 }
 
 export const getFlow = (boardId: number, query: CardQuery & PeriodQuery) => api<Flow>(`/api/v1/boards/${boardId}/flow`, { query });
+
+export type CfdGroup = "status" | "column";
+
+export interface Cfd {
+  boardId: number;
+  dataAsOf: string | null;
+  stale: boolean;
+  period: PeriodInfo;
+  group: CfdGroup;
+  filtered: boolean;
+  snapshotsSince: string | null;
+  available: boolean;
+  reason?: string;
+  series: { key: string; label: string }[];
+  days: { date: string; capturedAt: string; counts: Record<string, number> }[];
+}
+
+export const getCfd = (boardId: number, query: CardQuery & { from?: string; to?: string; group?: string }) =>
+  api<Cfd>(`/api/v1/boards/${boardId}/cfd`, { query });

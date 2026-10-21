@@ -6,7 +6,7 @@
 - `board_snapshots`: contagens por estado/coluna/lane dos cartões ativos e ids por estado (CFD, burndown).
 """
 
-from collections import Counter
+from collections import Counter, defaultdict
 from datetime import datetime
 from typing import Any
 
@@ -145,6 +145,9 @@ def build_snapshot(board: dict[str, Any], current: list[dict[str, Any]], now: da
     for c in active:
         if c.get("status") in ids:
             ids[c["status"]].append(c["cardId"])
+    by_column: dict[int | None, list[int]] = defaultdict(list)
+    for c in active:
+        by_column[c.get("columnId")].append(c["cardId"])
     counter = lambda key: [  # noqa: E731
         {"key": k, "count": n} for k, n in sorted(Counter(c.get(key) for c in active).items(), key=lambda kv: (kv[0] is None, kv[0] or 0))
     ]
@@ -154,7 +157,9 @@ def build_snapshot(board: dict[str, Any], current: list[dict[str, Any]], now: da
         "total": len(active),
         "blocked": sum(1 for c in active if c.get("isBlocked")),
         "byStatus": {s: len(v) for s, v in ids.items()},
-        "byColumn": counter("columnId"),
+        "byColumn": [  # cardIds permite aplicar filtros ao CFD por coluna
+            {"key": k, "count": len(v), "cardIds": sorted(v)} for k, v in sorted(by_column.items(), key=lambda kv: (kv[0] is None, kv[0] or 0))
+        ],
         "byLane": counter("laneId"),
         "cardIds": {s: sorted(v) for s, v in ids.items()},
     }

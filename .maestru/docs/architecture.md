@@ -95,7 +95,7 @@ Cartões ativos que deixam de aparecer recebem `missingSince` (nunca são apagad
   - `source="sync"`, `type="field_change"`: diferenças nos `TRACKED_FIELDS` (coluna, lane, secção, estado, bloqueio, responsável, estado do cartão) entre a sync anterior e a atual; `occurredAt` = hora da sync que observou, `previousObservedAt` = sync anterior.
   - `source="sync"`, `type="created"`: cartão novo visto depois da primeira sync (na primeira sync não se geram eventos).
   - `source="api"`, `type="transition"`: cada permanência em `transitions` da API → evento com coluna/lane/estado de origem e destino, `occurredAt` = início. Só reprocessado quando a lista do cartão muda.
-- `board_snapshots` (uma por sync com sucesso): `total`, `blocked`, `byStatus`, `byColumn`, `byLane` e `cardIds` por estado (backlog/todo/in_progress/done) dos cartões ativos não em falta.
+- `board_snapshots` (uma por sync com sucesso): `total`, `blocked`, `byStatus`, `byColumn` (com `cardIds` por coluna), `byLane` e `cardIds` por estado (backlog/todo/in_progress/done) dos cartões ativos não em falta.
 - Syncs com erro não escrevem histórico. O detalhe do cartão mostra só eventos `sync` (as transições da API já aparecem no percurso) e `eventsSince`/`snapshotsSince`.
 
 ## Jobs e worker
@@ -119,3 +119,4 @@ Todas as respostas de erro usam `{"error": {"code", "message", "details"?}}` (`a
 - `GET /api/v1/boards/{id}/deadlines` (filtros): listas de cartões abertos em atraso e a vencer em 7 dias (ordenadas por prazo, máx. 500 com `truncated`, `daysToDeadline`), abertos sem prazo e atrasos por responsável.
 - `GET /api/v1/boards/{id}/developers` (filtros exceto responsável/estado/prazos + período): por responsável (inclui "Sem responsável") backlog, a fazer, WIP, bloqueados, em atraso, cartões abertos como co-responsável, idade média/máx. do WIP (`aging_days`; estimada sem data de início), concluídos e série por intervalo. Inclui `disclaimer`: uso pessoal do tech lead, não é avaliação de desempenho.
 - `GET /api/v1/boards/{id}/flow` (filtros exceto estado/prazos + período): `leadTime` e `cycleTime` (P50/P85/P95, média, mín./máx.; `smallSample` < 5; `available=false` + `reason` sem dados) dos concluídos no período, `trend` por intervalo, `points` para dispersão, `wip` atual (total, bloqueados, por coluna/lane/responsável) e `aging` do WIP com limiar = cycle time P85 (`aboveP85`).
+- `GET /api/v1/boards/{id}/cfd?group=status|column` (período em dias; filtros de texto/responsável/tipo/prioridade aplicados aos `cardIds` dos snapshots com os atributos atuais): `series` e `days` com o último snapshot de cada dia local; `snapshotsSince`; `available=false` + `reason` sem histórico.

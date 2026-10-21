@@ -28,7 +28,7 @@ status: active
 |---|---|---|---|---|---|---|---|---|---|
 | E1 | Recolha de eventos e board_snapshots | done | 2026-10-21 | developer | high | 2026-10-21 |  | track-c/C3 |  |
 | E2 | WIP, aging, cycle/lead time e percentis | done | 2026-10-21 | developer | medium | 2026-10-21 |  | E1 |  |
-| E3 | Cumulative Flow Diagram | backlog | 2026-10-21 | developer | medium |  |  | E1 |  |
+| E3 | Cumulative Flow Diagram | done | 2026-10-21 | developer | medium | 2026-10-21 |  | E1 |  |
 | E4 | Bloqueios e qualidade | backlog | 2026-10-21 | developer | low |  |  | E1 |  |
 | E5 | Relatórios de sprint (burndown, velocity, compromisso) | backlog | 2026-10-21 | developer | medium |  |  | track-a/A5, E1 |  |
 <!-- /maestru:work-items-list -->

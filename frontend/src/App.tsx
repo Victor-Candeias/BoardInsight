@@ -3,6 +3,7 @@ import { Layout } from "@/components/Layout";
 import { BoardDetailPage } from "@/pages/BoardDetailPage";
 import { CardDetailPage } from "@/pages/CardDetailPage";
 import { CardsPage } from "@/pages/CardsPage";
+import { CfdPage } from "@/pages/CfdPage";
 import { DashboardPage } from "@/pages/DashboardPage";
 import { DeadlinesPage } from "@/pages/DeadlinesPage";
 import { DevelopersPage } from "@/pages/DevelopersPage";
@@ -21,6 +22,7 @@ export default function App() {
         <Route path="cards/:cardId" element={<CardDetailPage />} />
         <Route path="throughput" element={<ThroughputPage />} />
         <Route path="flow" element={<FlowPage />} />
+        <Route path="cfd" element={<CfdPage />} />
         <Route path="deadlines" element={<DeadlinesPage />} />
         <Route path="developers" element={<DevelopersPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
