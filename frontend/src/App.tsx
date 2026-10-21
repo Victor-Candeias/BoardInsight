@@ -5,6 +5,7 @@ import { CardDetailPage } from "@/pages/CardDetailPage";
 import { CardsPage } from "@/pages/CardsPage";
 import { DashboardPage } from "@/pages/DashboardPage";
 import { DeadlinesPage } from "@/pages/DeadlinesPage";
+import { DevelopersPage } from "@/pages/DevelopersPage";
 import { ThroughputPage } from "@/pages/ThroughputPage";
 import { BoardsPage } from "@/pages/BoardsPage";
 
@@ -19,6 +20,7 @@ export default function App() {
         <Route path="cards/:cardId" element={<CardDetailPage />} />
         <Route path="throughput" element={<ThroughputPage />} />
         <Route path="deadlines" element={<DeadlinesPage />} />
+        <Route path="developers" element={<DevelopersPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>

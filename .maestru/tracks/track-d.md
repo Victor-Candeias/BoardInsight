@@ -26,5 +26,5 @@ status: active
 |---|---|---|---|---|---|---|---|---|---|
 | D1 | Dashboard geral (KPIs, distribuições, filtros, aviso de dados desatualizados) | done | 2026-10-21 | developer | high | 2026-10-21 |  | track-c/C6 |  |
 | D2 | Throughput e prazos | done | 2026-10-21 | developer | medium | 2026-10-21 |  | D1 |  |
-| D3 | Página Developers (uso pessoal do tech lead) | backlog | 2026-10-21 | developer | low |  |  | D1 |  |
+| D3 | Página Developers (uso pessoal do tech lead) | done | 2026-10-21 | developer | low | 2026-10-21 |  | D1 |  |
 <!-- /maestru:work-items-list -->

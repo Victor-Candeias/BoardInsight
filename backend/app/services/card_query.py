@@ -130,6 +130,15 @@ def sort_spec(sort: str | None) -> list[tuple[str, int]]:
     return [(name, direction), ("cardId", direction)]
 
 
+def aging_days(card: dict[str, Any], now: datetime) -> tuple[float | None, bool]:
+    """Idade do trabalho em curso (dias) e se é estimada (sem data de início → posição atual)."""
+    if card.get("firstStartTime"):
+        return (now - card["firstStartTime"]).total_seconds() / 86400, False
+    if card.get("inCurrentPositionSince"):
+        return (now - card["inCurrentPositionSince"]).total_seconds() / 86400, True
+    return None, False
+
+
 class CardEnricher:
     """Acrescenta nomes (coluna, lane, workflow, tipo, responsável) a partir do board e da cache de utilizadores."""
 

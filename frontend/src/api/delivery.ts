@@ -47,3 +47,34 @@ export interface Deadlines {
 export const getThroughput = (boardId: number, query: CardQuery & PeriodQuery) =>
   api<Throughput>(`/api/v1/boards/${boardId}/throughput`, { query });
 export const getDeadlines = (boardId: number, query: CardQuery) => api<Deadlines>(`/api/v1/boards/${boardId}/deadlines`, { query });
+
+export interface DeveloperRow {
+  userId: number | null;
+  name: string;
+  backlog: number;
+  todo: number;
+  inProgress: number;
+  open: number;
+  blocked: number;
+  overdue: number;
+  coOwnedOpen: number;
+  completed: number;
+  completedSize: number;
+  avgAgingDays: number | null;
+  maxAgingDays: number | null;
+  agingEstimated: boolean;
+  completedSeries: number[];
+}
+
+export interface Developers {
+  boardId: number;
+  dataAsOf: string | null;
+  stale: boolean;
+  period: PeriodInfo;
+  buckets: { bucket: string; label: string }[];
+  developers: DeveloperRow[];
+  disclaimer: string;
+}
+
+export const getDevelopers = (boardId: number, query: CardQuery & PeriodQuery) =>
+  api<Developers>(`/api/v1/boards/${boardId}/developers`, { query });
