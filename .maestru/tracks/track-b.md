@@ -31,7 +31,7 @@ status: active
 | B1 | Scaffolding backend FastAPI, pyproject e lock de versões | done | 2026-10-21 | developer | high | 2026-10-21 |  | track-a/A4 |  |
 | B2 | Scaffolding frontend React/TS/Vite/Tailwind + shadcn/ui, TanStack Table e Recharts | done | 2026-10-21 | developer | high | 2026-10-21 |  |  |  |
 | B3 | Settings Pydantic, gestão segura da API Key e .env.example corrigido | done | 2026-10-21 | developer | high | 2026-10-21 |  | B1 |  |
-| B4 | Ligação MongoDB 4.4, repositórios, índices, /health e /ready | backlog | 2026-10-21 | developer | high |  |  | B1 |  |
+| B4 | Ligação MongoDB 4.4, repositórios, índices, /health e /ready | done | 2026-10-21 | developer | high | 2026-10-21 |  | B1 |  |
 | B5 | Logging estruturado sem segredos | backlog | 2026-10-21 | developer | medium |  |  | B1 |  |
 | B6 | Pipeline de testes (pytest, Vitest) e fixtures Businessmap mock | backlog | 2026-10-21 | developer | medium |  |  | B1, B2 |  |
 | B7 | Docs: architecture, businessmap-api-validation, metrics-definitions | backlog | 2026-10-21 | developer | medium |  |  | track-a/A1 |  |
