@@ -78,3 +78,18 @@ def sync_service(db, settings, client_factory):
     from app.services.sync import SyncService
 
     return SyncService(db, settings, client_factory)
+
+
+@pytest.fixture
+def synced(client, db, settings, client_factory, fake_bm):
+    import asyncio
+
+    from app.services.sync import SyncService
+
+    fake_bm.card(5004)["transitions"] = [
+        {"workflow_id": 1001, "column_id": 2003, "lane_id": 3001, "start": "2026-09-01T09:00:00Z", "end": "2026-09-05T09:00:00Z"},
+        {"workflow_id": 1001, "column_id": 2004, "lane_id": 3001, "start": "2026-09-05T09:00:00Z", "end": None},
+    ]
+    client.post("/api/v1/boards", json={"boardId": 96})
+    assert asyncio.run(SyncService(db, settings, client_factory).sync_board(96)).status == "success"
+    return client

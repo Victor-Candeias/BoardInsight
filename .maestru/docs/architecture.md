@@ -100,3 +100,9 @@ Cartões ativos que deixam de aparecer recebem `missingSince` (nunca são apagad
 ## Erros da API
 
 Todas as respostas de erro usam `{"error": {"code", "message", "details"?}}` (`api/errors.py`). Erros do Businessmap são mapeados para `businessmap_*` (502/503/404); configuração em falta → 503 `configuration_error`.
+
+## Filtros e períodos analíticos
+
+- Os filtros de cartões (`api/v1/filters.py`, `services/card_query.py`) são partilhados pela lista de cartões, dashboard e exportações; na UI vivem nos parâmetros do URL (`useCardFilters`).
+- Períodos (`services/periods.py`): `from`/`to` (datas locais `Europe/Lisbon`, inclusivas), `granularity` = `day|week|month` (semanas ISO, segunda-feira). Por omissão: últimas 12 semanas. Máximo de 400 intervalos (422 acima disso).
+- `GET /api/v1/boards/{id}/dashboard`: KPIs do estado atual (com filtros), distribuições (estado, coluna, lane, tipo, prioridade, responsável) e evolução criados vs. concluídos por intervalo. A evolução inclui arquivados e ignora os filtros de estado/datas; devolve `dataAsOf` e `stale`.

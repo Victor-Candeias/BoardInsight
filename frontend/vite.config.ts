@@ -28,5 +28,7 @@ export default defineConfig({
     globals: true,
     setupFiles: ["./src/test/setup.ts"],
     css: false,
+    // Máquina de destino lenta (Atom): os testes de páginas com gráficos excedem os 5 s por omissão.
+    testTimeout: 20000,
   },
 });

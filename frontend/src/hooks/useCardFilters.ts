@@ -1,6 +1,7 @@
 import { useCallback, useMemo } from "react";
 import { useSearchParams } from "react-router";
 import { CARD_FILTER_KEYS, type CardQuery } from "@/api/cards";
+import type { PeriodQuery } from "@/api/dashboard";
 
 /** Filtros guardados nos parâmetros do URL (partilháveis e mantidos ao recarregar). */
 const NO_KEYS: string[] = [];
@@ -10,10 +11,10 @@ export function useCardFilters(extraKeys: string[] = NO_KEYS) {
   const keys = useMemo(() => [...CARD_FILTER_KEYS, ...extraKeys], [extraKeys]);
 
   const query = useMemo(() => {
-    const q: CardQuery = {};
+    const q: CardQuery & PeriodQuery = {};
     for (const key of keys) {
       const value = params.get(key);
-      if (value) q[key as keyof CardQuery] = value;
+      if (value) q[key as keyof (CardQuery & PeriodQuery)] = value;
     }
     return q;
   }, [params, keys]);

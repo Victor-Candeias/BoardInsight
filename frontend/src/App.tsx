@@ -3,14 +3,14 @@ import { Layout } from "@/components/Layout";
 import { BoardDetailPage } from "@/pages/BoardDetailPage";
 import { CardDetailPage } from "@/pages/CardDetailPage";
 import { CardsPage } from "@/pages/CardsPage";
+import { DashboardPage } from "@/pages/DashboardPage";
 import { BoardsPage } from "@/pages/BoardsPage";
-import { HomePage } from "@/pages/HomePage";
 
 export default function App() {
   return (
     <Routes>
       <Route element={<Layout />}>
-        <Route index element={<HomePage />} />
+        <Route index element={<DashboardPage />} />
         <Route path="boards" element={<BoardsPage />} />
         <Route path="boards/:boardId" element={<BoardDetailPage />} />
         <Route path="cards" element={<CardsPage />} />
