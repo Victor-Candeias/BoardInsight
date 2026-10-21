@@ -9,6 +9,8 @@ from app.api.v1 import api_router
 from app.core.config import get_settings
 from app.core.database import get_database
 from app.core.indexes import ensure_indexes
+from app.core.logging import configure_logging
+from app.core.middleware import RequestLoggingMiddleware
 
 logger = logging.getLogger(__name__)
 
@@ -24,6 +26,8 @@ async def lifespan(_: FastAPI):
 
 
 def create_app(*, init_db: bool = True) -> FastAPI:
+    if init_db:
+        configure_logging(get_settings())
     app = FastAPI(
         title="BoardInsight API",
         version=__version__,
@@ -32,6 +36,7 @@ def create_app(*, init_db: bool = True) -> FastAPI:
         redoc_url=None,
         lifespan=lifespan if init_db else None,
     )
+    app.add_middleware(RequestLoggingMiddleware)
     app.include_router(health.router)
     app.include_router(api_router, prefix="/api/v1")
     return app
