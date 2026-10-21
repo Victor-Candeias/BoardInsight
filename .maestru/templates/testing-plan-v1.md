@@ -37,5 +37,9 @@ created: {{created}}
 
 ## Impacted Files
 
+<!-- Guidelines:
+- List test files created or modified and their purpose
+-->
+
 | File | Action | Purpose |
 |------|--------|---------|

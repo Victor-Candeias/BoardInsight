@@ -28,7 +28,7 @@ status: active
 <!-- maestru:work-items-list -->
 | ID | Title | Status | Created | Owner | Priority | Completed | Template | Blocked By | Spec |
 |---|---|---|---|---|---|---|---|---|---|
-| B1 | Scaffolding backend FastAPI, pyproject e lock de versões | backlog | 2026-10-21 | developer | high |  |  | track-a/A4 |  |
+| B1 | Scaffolding backend FastAPI, pyproject e lock de versões | done | 2026-10-21 | developer | high | 2026-10-21 |  | track-a/A4 |  |
 | B2 | Scaffolding frontend React/TS/Vite/Tailwind + shadcn/ui, TanStack Table e Recharts | backlog | 2026-10-21 | developer | high |  |  |  |  |
 | B3 | Settings Pydantic, gestão segura da API Key e .env.example corrigido | backlog | 2026-10-21 | developer | high |  |  | B1 |  |
 | B4 | Ligação MongoDB 4.4, repositórios, índices, /health e /ready | backlog | 2026-10-21 | developer | high |  |  | B1 |  |
