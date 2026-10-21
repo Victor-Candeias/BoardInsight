@@ -34,9 +34,10 @@ def settings(settings_factory, tmp_path):
 
 
 @pytest.fixture
-def client(db, settings):
+def client(db, settings, client_factory):
     from fastapi.testclient import TestClient
 
+    from app.api.deps import get_client_factory
     from app.core.config import get_settings
     from app.core.database import get_database
     from app.main import create_app
@@ -44,6 +45,7 @@ def client(db, settings):
     app = create_app(init_db=False)
     app.dependency_overrides[get_database] = lambda: db
     app.dependency_overrides[get_settings] = lambda: settings
+    app.dependency_overrides[get_client_factory] = lambda: client_factory
     with TestClient(app) as test_client:
         yield test_client
 

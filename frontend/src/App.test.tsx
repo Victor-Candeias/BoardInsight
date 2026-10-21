@@ -1,15 +1,13 @@
-import { render, screen } from "@testing-library/react";
-import { MemoryRouter } from "react-router";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { screen } from "@testing-library/react";
+import { afterEach, it, expect, vi } from "vitest";
 import App from "@/App";
+import { mockFetch, renderWithProviders } from "@/test/utils";
 
-it("renderiza a navegação principal", () => {
-  render(
-    <QueryClientProvider client={new QueryClient()}>
-      <MemoryRouter>
-        <App />
-      </MemoryRouter>
-    </QueryClientProvider>,
-  );
+afterEach(() => vi.unstubAllGlobals());
+
+it("renderiza a navegação principal", async () => {
+  mockFetch({ "GET /api/v1/boards": () => [] });
+  renderWithProviders(<App />);
   expect(screen.getByRole("navigation", { name: "Navegação principal" })).toBeInTheDocument();
+  expect(await screen.findByText("Nenhum board configurado")).toBeInTheDocument();
 });

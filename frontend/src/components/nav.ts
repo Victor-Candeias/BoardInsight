@@ -1,4 +1,4 @@
-import { Home, type LucideIcon } from "lucide-react";
+import { Home, LayoutGrid, type LucideIcon } from "lucide-react";
 
 export interface NavItem {
   to: string;
@@ -6,4 +6,7 @@ export interface NavItem {
   icon: LucideIcon;
 }
 
-export const NAV_ITEMS: NavItem[] = [{ to: "/", label: "Início", icon: Home }];
+export const NAV_ITEMS: NavItem[] = [
+  { to: "/", label: "Início", icon: Home },
+  { to: "/boards", label: "Boards", icon: LayoutGrid },
+];

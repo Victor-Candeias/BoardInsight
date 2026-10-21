@@ -31,6 +31,6 @@ status: active
 | C2 | DTOs de cartões a partir de respostas reais | done | 2026-10-21 | developer | high | 2026-10-21 |  | track-a/A2 |  |
 | C3 | Sync idempotente paginado com lock e sync_runs | done | 2026-10-21 | developer | critical | 2026-10-21 |  | C1, C2, track-b/B4 |  |
 | C4 | Timer systemd de sync (30 min), worker de jobs (MongoDB) e botão de refresh na UI | done | 2026-10-21 | developer | high | 2026-10-21 |  | C3 |  |
-| C5 | API e página Boards (trocar board ativo, test-connection, mapeamento de colunas só leitura) | backlog | 2026-10-21 | developer | high |  |  | track-b/B4, C1 |  |
+| C5 | API e página Boards (trocar board ativo, test-connection, mapeamento de colunas só leitura) | done | 2026-10-21 | developer | high | 2026-10-21 |  | track-b/B4, C1 |  |
 | C6 | API e página Cartões (filtros, paginação, detalhe) | backlog | 2026-10-21 | developer | high |  |  | C3 |  |
 <!-- /maestru:work-items-list -->

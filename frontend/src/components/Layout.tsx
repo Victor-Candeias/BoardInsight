@@ -1,5 +1,6 @@
 import { NavLink, Outlet } from "react-router";
 import { NAV_ITEMS } from "@/components/nav";
+import { BoardSelector } from "@/components/BoardSelector";
 import { SyncButton } from "@/components/SyncButton";
 import { useActiveBoard } from "@/hooks/useActiveBoard";
 import { cn } from "@/lib/utils";
@@ -30,7 +31,8 @@ export function Layout() {
         </nav>
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex h-14 items-center justify-end gap-4 border-b border-slate-200 bg-white px-6">
+        <header className="flex h-14 items-center justify-between gap-4 border-b border-slate-200 bg-white px-6">
+          <BoardSelector />
           {boardId !== null && <SyncButton boardId={boardId} />}
         </header>
         <main className="flex-1 p-6">
