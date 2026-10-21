@@ -223,3 +223,6 @@ __marimo__/
 node_modules/
 frontend/dist/
 *.tsbuildinfo
+
+# Amostras reais da API (rever antes de commitar)
+backend/samples/

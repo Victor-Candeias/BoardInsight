@@ -28,7 +28,7 @@ status: active
 | ID | Title | Status | Created | Owner | Priority | Completed | Template | Blocked By | Spec |
 |---|---|---|---|---|---|---|---|---|---|
 | C1 | BusinessmapClient (httpx, retry/backoff, erros normalizados) e teste Board 96 | done | 2026-10-21 | developer | critical | 2026-10-21 |  | track-a/A1, track-b/B3 |  |
-| C2 | DTOs de cartões a partir de respostas reais | backlog | 2026-10-21 | developer | high |  |  | track-a/A2 |  |
+| C2 | DTOs de cartões a partir de respostas reais | done | 2026-10-21 | developer | high | 2026-10-21 |  | track-a/A2 |  |
 | C3 | Sync idempotente paginado com lock e sync_runs | backlog | 2026-10-21 | developer | critical |  |  | C1, C2, track-b/B4 |  |
 | C4 | Timer systemd de sync (30 min), worker de jobs (MongoDB) e botão de refresh na UI | backlog | 2026-10-21 | developer | high |  |  | C3 |  |
 | C5 | API e página Boards (trocar board ativo, test-connection, mapeamento de colunas só leitura) | backlog | 2026-10-21 | developer | high |  |  | track-b/B4, C1 |  |
