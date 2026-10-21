@@ -61,7 +61,10 @@ beforeEach(() => {
     "GET /api/v1/boards/96/cards/1": () => ({
       ...card(1),
       transitions: [{ column_id: 2003, lane_id: 3001, start: "2026-09-01T10:00:00Z", end: "2026-09-03T10:00:00Z", columnName: "Em curso", laneName: "Equipa" }],
-      events: [],
+      events: [
+        { occurredAt: "2026-10-02T10:00:00Z", type: "field_change", field: "status", fieldLabel: "Estado", from: "todo", to: "in_progress", fromLabel: "A fazer", toLabel: "Em curso" },
+      ],
+      eventsSince: "2026-10-01T10:00:00Z",
       dataAsOf: "2026-10-21T10:00:00Z",
     }),
   });
@@ -109,5 +112,8 @@ it("mostra o detalhe do cartão com o percurso no board", async () => {
   renderWithProviders(<App />, { route: "/cards/1" });
   expect(await screen.findByRole("heading", { name: "Cartão 1" })).toBeInTheDocument();
   expect(screen.getByText("2 d")).toBeInTheDocument();
+  const events = screen.getByRole("table", { name: "Alterações observadas" });
+  expect(events).toHaveTextContent("EstadoA fazerEm curso");
+  expect(screen.getByText(/recolhidas desde 01\/10\/2026/)).toBeInTheDocument();
   expect(screen.getByRole("link", { name: /Abrir no Businessmap/ })).toHaveAttribute("href", expect.stringContaining("/cards/1/details/"));
 });

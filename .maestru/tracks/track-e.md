@@ -26,7 +26,7 @@ status: active
 <!-- maestru:work-items-list -->
 | ID | Title | Status | Created | Owner | Priority | Completed | Template | Blocked By | Spec |
 |---|---|---|---|---|---|---|---|---|---|
-| E1 | Recolha de eventos e board_snapshots | backlog | 2026-10-21 | developer | high |  |  | track-c/C3 |  |
+| E1 | Recolha de eventos e board_snapshots | done | 2026-10-21 | developer | high | 2026-10-21 |  | track-c/C3 |  |
 | E2 | WIP, aging, cycle/lead time e percentis | backlog | 2026-10-21 | developer | medium |  |  | E1 |  |
 | E3 | Cumulative Flow Diagram | backlog | 2026-10-21 | developer | medium |  |  | E1 |  |
 | E4 | Bloqueios e qualidade | backlog | 2026-10-21 | developer | low |  |  | E1 |  |

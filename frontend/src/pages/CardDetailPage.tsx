@@ -125,13 +125,18 @@ export function CardDetailPage() {
           )}
         </CardContent>
       </Card>
-      {c.events.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Alterações observadas</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Table>
+      <Card>
+        <CardHeader>
+          <CardTitle>Alterações observadas</CardTitle>
+          <CardDescription>
+            Detetadas entre sincronizações{c.eventsSince ? `, recolhidas desde ${formatDateTime(c.eventsSince)}` : ""}. A hora é a da sincronização que observou a alteração.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {c.events.length === 0 ? (
+            <p className="text-sm text-slate-500">Nenhuma alteração observada.</p>
+          ) : (
+            <Table aria-label="Alterações observadas">
               <THead>
                 <TR>
                   <TH>Quando</TH>
@@ -144,16 +149,16 @@ export function CardDetailPage() {
                 {c.events.map((e, i) => (
                   <TR key={i}>
                     <TD>{formatDateTime(e.occurredAt)}</TD>
-                    <TD>{e.field ?? e.type}</TD>
-                    <TD>{e.fromLabel ?? String(e.from ?? "—")}</TD>
-                    <TD>{e.toLabel ?? String(e.to ?? "—")}</TD>
+                    <TD>{e.fieldLabel ?? e.field ?? e.type}</TD>
+                    <TD>{e.fromLabel ?? (e.from == null ? "—" : String(e.from))}</TD>
+                    <TD>{e.toLabel ?? (e.to == null ? "—" : String(e.to))}</TD>
                   </TR>
                 ))}
               </TBody>
             </Table>
-          </CardContent>
-        </Card>
-      )}
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

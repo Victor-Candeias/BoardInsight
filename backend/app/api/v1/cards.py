@@ -8,6 +8,7 @@ from app.api.v1.common import board_or_404
 from app.api.v1.filters import Filters
 from app.models.cards import PRIORITY_LABELS, STATUS_LABELS
 from app.services.card_query import CardEnricher, build_query, sort_spec
+from app.services.history import history_since, label_event
 
 router = APIRouter(prefix="/boards/{board_id}/cards", tags=["cards"])
 
@@ -80,7 +81,17 @@ def get_card(board_id: int, card_id: int, db: DB) -> dict[str, Any]:
         ),
         key=lambda t: (t.get("start") is None, t.get("start") or 0),
     )
-    events = list(
-        db.card_events.find({"boardId": board_id, "cardId": card_id}, {"_id": 0}).sort("occurredAt", -1).limit(200)
-    )
-    return {**enrich(card), "transitions": transitions, "events": events, "dataAsOf": board.get("lastSuccessfulSyncAt")}
+    events = [
+        label_event(e, enrich)
+        # As transições da API já aparecem em `transitions`; aqui só as alterações observadas entre syncs.
+        for e in db.card_events.find({"boardId": board_id, "cardId": card_id, "source": {"$ne": "api"}}, {"_id": 0})
+        .sort("occurredAt", -1)
+        .limit(200)
+    ]
+    return {
+        **enrich(card),
+        "transitions": transitions,
+        "events": events,
+        "dataAsOf": board.get("lastSuccessfulSyncAt"),
+        **history_since(db, board_id),
+    }

@@ -189,5 +189,7 @@ class SyncService:
 
 
 def default_hooks() -> list[SyncHook]:
-    return []
+    from app.services.history import events_hook, snapshot_hook
+
+    return [events_hook, snapshot_hook]
 

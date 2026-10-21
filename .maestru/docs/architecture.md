@@ -89,6 +89,15 @@ O board ativo é escolhido no cabeçalho (guardado no `localStorage`).
 
 Cartões ativos que deixam de aparecer recebem `missingSince` (nunca são apagados). Ver `services/sync.py`.
 
+### Histórico (hooks da sync, `services/history.py`)
+
+- `card_events` com `eventKey` único (reprocessar não duplica):
+  - `source="sync"`, `type="field_change"`: diferenças nos `TRACKED_FIELDS` (coluna, lane, secção, estado, bloqueio, responsável, estado do cartão) entre a sync anterior e a atual; `occurredAt` = hora da sync que observou, `previousObservedAt` = sync anterior.
+  - `source="sync"`, `type="created"`: cartão novo visto depois da primeira sync (na primeira sync não se geram eventos).
+  - `source="api"`, `type="transition"`: cada permanência em `transitions` da API → evento com coluna/lane/estado de origem e destino, `occurredAt` = início. Só reprocessado quando a lista do cartão muda.
+- `board_snapshots` (uma por sync com sucesso): `total`, `blocked`, `byStatus`, `byColumn`, `byLane` e `cardIds` por estado (backlog/todo/in_progress/done) dos cartões ativos não em falta.
+- Syncs com erro não escrevem histórico. O detalhe do cartão mostra só eventos `sync` (as transições da API já aparecem no percurso) e `eventsSince`/`snapshotsSince`.
+
 ## Jobs e worker
 
 - `POST /api/v1/boards/{id}/sync` cria um job `sync_board` (devolve o job ativo existente se já houver um, HTTP 200).

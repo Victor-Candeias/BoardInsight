@@ -50,6 +50,7 @@ export interface CardEvent {
   occurredAt: string;
   type: string;
   field?: string;
+  fieldLabel?: string;
   from?: unknown;
   to?: unknown;
   fromLabel?: string | null;
@@ -65,6 +66,8 @@ export interface CardDetail extends Card {
   lastEndTime: string | null;
   inCurrentPositionSince: string | null;
   loggedTimeSeconds: number | null;
+  eventsSince?: string | null;
+  snapshotsSince?: string | null;
 }
 
 export interface CardPage {
