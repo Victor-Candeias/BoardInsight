@@ -46,3 +46,33 @@ def client(db, settings):
     app.dependency_overrides[get_settings] = lambda: settings
     with TestClient(app) as test_client:
         yield test_client
+
+
+@pytest.fixture
+def fake_bm():
+    from tests.businessmap_fake import FakeBusinessmap
+
+    return FakeBusinessmap()
+
+
+@pytest.fixture
+def client_factory(fake_bm):
+    from app.integrations.businessmap import BusinessmapClient
+    from tests.businessmap_fake import API_KEY
+
+    async def no_sleep(_):
+        return None
+
+    def factory():
+        return BusinessmapClient(
+            "https://cttv8.example/api/v2", API_KEY, transport=fake_bm.transport(), sleep=no_sleep, max_retries=1
+        )
+
+    return factory
+
+
+@pytest.fixture
+def sync_service(db, settings, client_factory):
+    from app.services.sync import SyncService
+
+    return SyncService(db, settings, client_factory)
