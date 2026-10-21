@@ -10,6 +10,7 @@ from pymongo.database import Database
 from app.models.cards import PRIORITY_LABELS, STATUS_LABELS
 from app.repositories.base import utcnow
 from app.services.card_query import DUE_SOON_DAYS, CardEnricher, CardFilters, build_query
+from app.services.delivery import completed_query
 from app.services.periods import Granularity, Period, bucket_label, bucket_of, buckets
 
 FIELDS = {
@@ -71,7 +72,7 @@ def build_dashboard(
     period_filters = replace(filters, state="all", status=[], created_from=None, created_to=None, ended_from=None, ended_to=None)
     base = build_query(board_id, period_filters, tz, now)
     created = list(db.cards.find({**base, "createdAt": {"$gte": period.start_utc, "$lt": period.end_utc}}, {"createdAt": 1}))
-    completed = list(db.cards.find({**base, "endTime": {"$gte": period.start_utc, "$lt": period.end_utc}}, {"endTime": 1, "size": 1}))
+    completed = list(db.cards.find(completed_query(board_id, filters, period, now), {"endTime": 1}))
     created_by = Counter(bucket_of(c["createdAt"], granularity, tz) for c in created)
     completed_by = Counter(bucket_of(c["endTime"], granularity, tz) for c in completed)
     timeline = [
