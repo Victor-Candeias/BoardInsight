@@ -64,6 +64,10 @@ class Settings(BaseSettings):
     sync_lock_ttl_minutes: int = 20
     stale_after_minutes: int = 90
 
+    worker_poll_seconds: float = 2.0
+    job_timeout_minutes: int = 30
+    job_retention_days: int = 7
+
     export_dir: Path = Path("/var/lib/boardinsight/exports")
     export_retention_days: int = 30
     export_max_rows: int = 50_000

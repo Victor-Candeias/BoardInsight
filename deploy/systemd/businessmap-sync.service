@@ -1,0 +1,20 @@
+[Unit]
+Description=BoardInsight — sincronização Businessmap (todos os boards ativos)
+After=network-online.target mongod.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=boardinsight
+Group=boardinsight
+WorkingDirectory=/opt/boardinsight/backend
+Environment=BOARDINSIGHT_ENV_FILE=/opt/boardinsight/.env
+ExecStart=/opt/boardinsight/backend/.venv/bin/python -m app.jobs.sync
+# O lock por board (TTL SYNC_LOCK_TTL_MINUTES) evita sobreposição com o worker.
+TimeoutStartSec=25min
+Nice=10
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/boardinsight

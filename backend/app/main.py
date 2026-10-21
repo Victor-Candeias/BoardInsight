@@ -5,6 +5,7 @@ from fastapi import FastAPI
 
 from app import __version__
 from app.api import health
+from app.api.errors import install_error_handlers
 from app.api.v1 import api_router
 from app.core.config import get_settings
 from app.core.database import get_database
@@ -37,6 +38,7 @@ def create_app(*, init_db: bool = True) -> FastAPI:
         lifespan=lifespan if init_db else None,
     )
     app.add_middleware(RequestLoggingMiddleware)
+    install_error_handlers(app)
     app.include_router(health.router)
     app.include_router(api_router, prefix="/api/v1")
     return app

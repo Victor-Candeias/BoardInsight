@@ -1,0 +1,25 @@
+[Unit]
+Description=BoardInsight — worker de jobs (sync manual, exportações)
+After=network-online.target mongod.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=boardinsight
+Group=boardinsight
+WorkingDirectory=/opt/boardinsight/backend
+Environment=BOARDINSIGHT_ENV_FILE=/opt/boardinsight/.env
+ExecStart=/opt/boardinsight/backend/.venv/bin/python -m app.jobs.worker
+Restart=on-failure
+RestartSec=5
+KillSignal=SIGTERM
+TimeoutStopSec=60
+MemoryMax=400M
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/boardinsight
+
+[Install]
+WantedBy=multi-user.target

@@ -54,7 +54,7 @@ Nginx :80 ── /            -> frontend/dist (SPA React, PT-PT)
 | `models/` | DTOs Pydantic das respostas Businessmap e modelos da API interna |
 | `repositories/` | Acesso às collections (boards, cards, card_events, board_snapshots, sync_runs, jobs, locks, report_*) |
 | `services/` | boards, sync, cards, dashboard, métricas de fluxo, sprints, exportações, relatórios |
-| `jobs/` | Entradas CLI: `sync`, `worker`, limpeza de retenção |
+| `jobs/` | Entradas CLI: `sync` (timer + retenção), `worker` (fila `jobs`), `handlers` |
 | `api/v1/` | Routers FastAPI |
 
 ## Frontend (`frontend/src`)
@@ -73,7 +73,7 @@ O board ativo é escolhido no cabeçalho (guardado no `localStorage`).
 | `board_snapshots` | Contagens por coluna/secção em cada sync | 183 dias (TTL) |
 | `sync_runs` | Auditoria das syncs (contagens, duração, erros) | 90 dias (TTL) |
 | `locks` | Lock por board (`expiresAt`) | TTL |
-| `jobs` | Fila de jobs (pendente → a correr → concluído/erro) | 30 dias (TTL) |
+| `jobs` | Fila de jobs (pendente → a correr → concluído/erro) | `JOB_RETENTION_DAYS` (7) após terminar (TTL) |
 | `report_definitions` | Definições de relatórios guardadas | permanente |
 | `report_exports` | Metadados de ficheiros exportados | 30 dias (TTL + limpeza de ficheiros) |
 | `users_cache` | Nomes dos utilizadores Businessmap por board | atualizado em cada sync |
@@ -86,3 +86,17 @@ O board ativo é escolhido no cabeçalho (guardado no `localStorage`).
 4. Só se **todas** as páginas forem lidas: upserts idempotentes em `cards`, eventos de transição, snapshot, `lastSuccessfulSyncAt`.
 5. Em falha parcial: nada é marcado como removido/concluído; `sync_run` fica com erro.
 6. Libertar lock.
+
+Cartões ativos que deixam de aparecer recebem `missingSince` (nunca são apagados). Ver `services/sync.py`.
+
+## Jobs e worker
+
+- `POST /api/v1/boards/{id}/sync` cria um job `sync_board` (devolve o job ativo existente se já houver um, HTTP 200).
+- `GET /api/v1/jobs/{id}` e `GET /api/v1/boards/{id}/sync-status` permitem à UI acompanhar (botão **Atualizar** no cabeçalho, polling de 2 s).
+- O worker (`app.jobs.worker`) faz polling a cada `WORKER_POLL_SECONDS`; jobs `running` há mais de `JOB_TIMEOUT_MINUTES` passam a `error` (`timeout`).
+- `app.jobs.sync` (timer) sai com código 1 se algum board falhar e 2 se faltar a API key.
+- Unidades systemd em `deploy/systemd/`.
+
+## Erros da API
+
+Todas as respostas de erro usam `{"error": {"code", "message", "details"?}}` (`api/errors.py`). Erros do Businessmap são mapeados para `businessmap_*` (502/503/404); configuração em falta → 503 `configuration_error`.
