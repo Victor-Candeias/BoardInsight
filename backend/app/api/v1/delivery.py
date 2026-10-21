@@ -9,6 +9,7 @@ from app.api.v1.dashboard import period_params
 from app.api.v1.filters import Filters
 from app.services.delivery import build_deadlines, build_throughput
 from app.services.developers import build_developers
+from app.services.flow import build_flow
 from app.services.periods import Granularity
 
 router = APIRouter(prefix="/boards/{board_id}", tags=["delivery"])
@@ -48,3 +49,18 @@ def developers(
     board = board_or_404(db, board_id)
     period, granularity = period_params(settings, date_from, date_to, granularity)
     return build_developers(db, board, filters, period, granularity) | {"stale": is_stale(board, settings)}
+
+
+@router.get("/flow")
+def flow(
+    board_id: int,
+    db: DB,
+    settings: AppSettings,
+    filters: Filters,
+    date_from: Annotated[date | None, Query(alias="from")] = None,
+    date_to: Annotated[date | None, Query(alias="to")] = None,
+    granularity: Granularity = "week",
+) -> dict[str, Any]:
+    board = board_or_404(db, board_id)
+    period, granularity = period_params(settings, date_from, date_to, granularity)
+    return build_flow(db, board, filters, period, granularity) | {"stale": is_stale(board, settings)}

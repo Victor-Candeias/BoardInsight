@@ -6,6 +6,7 @@ import { CardsPage } from "@/pages/CardsPage";
 import { DashboardPage } from "@/pages/DashboardPage";
 import { DeadlinesPage } from "@/pages/DeadlinesPage";
 import { DevelopersPage } from "@/pages/DevelopersPage";
+import { FlowPage } from "@/pages/FlowPage";
 import { ThroughputPage } from "@/pages/ThroughputPage";
 import { BoardsPage } from "@/pages/BoardsPage";
 
@@ -19,6 +20,7 @@ export default function App() {
         <Route path="cards" element={<CardsPage />} />
         <Route path="cards/:cardId" element={<CardDetailPage />} />
         <Route path="throughput" element={<ThroughputPage />} />
+        <Route path="flow" element={<FlowPage />} />
         <Route path="deadlines" element={<DeadlinesPage />} />
         <Route path="developers" element={<DevelopersPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />

@@ -78,3 +78,53 @@ export interface Developers {
 
 export const getDevelopers = (boardId: number, query: CardQuery & PeriodQuery) =>
   api<Developers>(`/api/v1/boards/${boardId}/developers`, { query });
+
+export interface MetricSummary {
+  available: boolean;
+  reason?: string;
+  count: number;
+  smallSample?: boolean;
+  p50?: number;
+  p85?: number;
+  p95?: number;
+  mean?: number;
+  min?: number;
+  max?: number;
+}
+
+export interface AgingItem {
+  cardId: number;
+  customId: string | null;
+  title: string;
+  columnName: string | null;
+  ownerName: string | null;
+  isBlocked: boolean;
+  ageDays: number | null;
+  estimated: boolean;
+  aboveP85: boolean;
+}
+
+export interface FlowPoint {
+  cardId: number;
+  customId: string | null;
+  title: string;
+  typeName: string | null;
+  endTime: string;
+  leadDays: number | null;
+  cycleDays: number | null;
+}
+
+export interface Flow {
+  boardId: number;
+  dataAsOf: string | null;
+  stale: boolean;
+  period: PeriodInfo;
+  wip: { total: number; blocked: number; byColumn: DistributionItem[]; byLane: DistributionItem[]; byOwner: DistributionItem[] };
+  aging: MetricSummary & { threshold: number | null; aboveThreshold: number; estimatedCount: number; items: AgingItem[] };
+  leadTime: MetricSummary;
+  cycleTime: MetricSummary & { withoutStart: number };
+  trend: { bucket: string; label: string; count: number; cycleP50: number | null; cycleP85: number | null; leadP50: number | null }[];
+  points: FlowPoint[];
+}
+
+export const getFlow = (boardId: number, query: CardQuery & PeriodQuery) => api<Flow>(`/api/v1/boards/${boardId}/flow`, { query });
