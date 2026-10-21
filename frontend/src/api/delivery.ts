@@ -147,3 +147,76 @@ export interface Cfd {
 
 export const getCfd = (boardId: number, query: CardQuery & { from?: string; to?: string; group?: string }) =>
   api<Cfd>(`/api/v1/boards/${boardId}/cfd`, { query });
+
+export interface BlockedItem {
+  cardId: number;
+  customId: string | null;
+  title: string;
+  status: string;
+  columnName: string | null;
+  laneName: string | null;
+  ownerUserId: number | null;
+  ownerName: string | null;
+  reason: string | null;
+  comment: string | null;
+  blockedSeconds: number | null;
+  blockedDays: number | null;
+}
+
+export type BlockDistribution = DistributionItem & { days: number };
+
+export interface Blockers {
+  boardId: number;
+  dataAsOf: string | null;
+  stale: boolean;
+  period: PeriodInfo;
+  current: {
+    blocked: number;
+    openTotal: number;
+    share: number | null;
+    days: MetricSummary;
+    byReason: BlockDistribution[];
+    byOwner: BlockDistribution[];
+    byColumn: BlockDistribution[];
+    items: BlockedItem[];
+    truncated: boolean;
+  };
+  history: {
+    historySince: string | null;
+    started: number;
+    resolved: number;
+    resolvedDays: MetricSummary;
+    series: { bucket: string; label: string; started: number; resolved: number }[];
+  };
+}
+
+export interface Quality {
+  boardId: number;
+  dataAsOf: string | null;
+  stale: boolean;
+  period: PeriodInfo;
+  historySince: string | null;
+  available: boolean;
+  reason?: string;
+  reopens: number;
+  reopenedCards: number;
+  completed: number;
+  reopenRate: number | null;
+  series: { bucket: string; label: string; reopens: number }[];
+  items: {
+    cardId: number;
+    customId: string | null;
+    title: string | null;
+    status: string | null;
+    columnName: string | null;
+    ownerName: string | null;
+    reopens: number;
+    lastReopenedAt: string;
+  }[];
+  truncated: boolean;
+}
+
+export const getBlockers = (boardId: number, query: CardQuery & PeriodQuery) =>
+  api<Blockers>(`/api/v1/boards/${boardId}/blockers`, { query });
+export const getQuality = (boardId: number, query: CardQuery & PeriodQuery) =>
+  api<Quality>(`/api/v1/boards/${boardId}/quality`, { query });

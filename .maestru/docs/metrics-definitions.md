@@ -55,7 +55,8 @@ O estado interno deriva da **secção** Businessmap da coluna atual (só leitura
 | A vencer | `deadline` nos próximos 7 dias e não concluído | Deadline |
 | Bloqueados | `is_blocked=1`; duração = `current_block_time` (segundos da API) | Estado atual |
 | CFD | Por dia, último snapshot desse dia: n.º de cartões por coluna/estado | `board_snapshots` (desde o início da recolha) |
-| Reaberturas | Transições observadas de `done` para outro estado | `card_events` (desde o início da recolha) |
+| Bloqueios observados | Eventos `isBlocked` false→true (início) e true→false (fim) entre syncs; duração = fim − início (precisão = intervalo de sync) | `card_events` (desde o início da recolha) |
+| Reaberturas | Passagem de `done` para backlog/todo/in_progress (eventos da sync ou transições da API; sem dupla contagem por cartão); taxa = cartões reabertos ÷ concluídos no período | `card_events` (desde o início da recolha) |
 | Dados desatualizados | `lastSuccessfulSyncAt` há mais de `STALE_AFTER_MINUTES` (90) | `boards` |
 
 ## Sprints (por board, intervalos de datas)

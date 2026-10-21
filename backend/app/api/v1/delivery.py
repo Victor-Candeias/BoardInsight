@@ -12,6 +12,7 @@ from app.services.delivery import build_deadlines, build_throughput
 from app.services.developers import build_developers
 from app.services.flow import build_flow
 from app.services.periods import Granularity
+from app.services.quality import build_blockers, build_quality
 
 router = APIRouter(prefix="/boards/{board_id}", tags=["delivery"])
 
@@ -80,3 +81,34 @@ def cfd(
     board = board_or_404(db, board_id)
     period, _ = period_params(settings, date_from, date_to, "day")
     return build_cfd(db, board, filters, period, group) | {"stale": is_stale(board, settings)}
+
+
+@router.get("/blockers")
+def blockers(
+    board_id: int,
+    db: DB,
+    settings: AppSettings,
+    filters: Filters,
+    date_from: Annotated[date | None, Query(alias="from")] = None,
+    date_to: Annotated[date | None, Query(alias="to")] = None,
+    granularity: Granularity = "week",
+) -> dict[str, Any]:
+    board = board_or_404(db, board_id)
+    period, granularity = period_params(settings, date_from, date_to, granularity)
+    return build_blockers(db, board, filters, period, granularity) | {"stale": is_stale(board, settings)}
+
+
+@router.get("/quality")
+def quality(
+    board_id: int,
+    db: DB,
+    settings: AppSettings,
+    filters: Filters,
+    date_from: Annotated[date | None, Query(alias="from")] = None,
+    date_to: Annotated[date | None, Query(alias="to")] = None,
+    granularity: Granularity = "week",
+) -> dict[str, Any]:
+    board = board_or_404(db, board_id)
+    period, granularity = period_params(settings, date_from, date_to, granularity)
+    return build_quality(db, board, filters, period, granularity) | {"stale": is_stale(board, settings)}
+
