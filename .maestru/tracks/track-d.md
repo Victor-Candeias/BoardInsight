@@ -31,4 +31,5 @@ status: active
 | D5 | KPI "Cartões ativos" conta só cartões abertos (exclui Done) | done | 2026-10-22 |  | medium | 2026-10-22 |  |  |  |
 | D6 | Página Atenção (triagem diária do tech lead) como página inicial | done | 2026-10-22 |  | high | 2026-10-22 |  |  |  |
 | D7 | Aspeto mais profissional da UI e logótipo BoardInsight | done | 2026-10-22 |  | medium | 2026-10-22 |  |  |  |
+| H1 | Implementar dark mode persistente | done | 2026-10-22 |  | medium | 2026-10-22 |  |  |  |
 <!-- /maestru:work-items-list -->
