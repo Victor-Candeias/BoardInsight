@@ -35,5 +35,5 @@ status: active
 | H5 | Exportar página Fluxo para PDF | done | 2026-10-22 |  | medium | 2026-10-22 |  |  |  |
 | H6 | Exportar página Bloqueios e qualidade para PDF | done | 2026-10-22 |  | medium | 2026-10-22 |  |  |  |
 | H7 | Exportar página Prazos para PDF | done | 2026-10-22 |  | medium | 2026-10-22 |  |  |  |
-| H8 | PDFs de todas as páginas sem barras de scroll e com o conteúdo completo | backlog | 2026-10-22 |  | medium |  |  |  |  |
+| H8 | PDFs de todas as páginas sem barras de scroll e com o conteúdo completo | done | 2026-10-22 |  | medium | 2026-10-22 |  |  |  |
 <!-- /maestru:work-items-list -->
