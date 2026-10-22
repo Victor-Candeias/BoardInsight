@@ -1,0 +1,14 @@
+[Unit]
+Description=BoardInsight frontend (vite preview em 0.0.0.0:5180, deploy local em /opt/BoardInsight)
+After=network-online.target boardinsight-api.service
+Wants=boardinsight-api.service
+
+[Service]
+Type=exec
+WorkingDirectory=/opt/BoardInsight/frontend
+ExecStart=/usr/bin/node /opt/BoardInsight/frontend/node_modules/vite/bin/vite.js preview --host 0.0.0.0 --port 5180 --strictPort
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target

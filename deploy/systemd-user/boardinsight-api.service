@@ -1,0 +1,16 @@
+[Unit]
+Description=BoardInsight API (uvicorn em 127.0.0.1:8000, deploy local em /opt/BoardInsight)
+After=network-online.target
+
+[Service]
+Type=exec
+WorkingDirectory=/opt/BoardInsight/backend
+Environment=BOARDINSIGHT_ENV_FILE=/opt/BoardInsight/.env
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/opt/BoardInsight/backend/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000 --workers 1 --no-access-log
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=30
+
+[Install]
+WantedBy=default.target
