@@ -117,4 +117,21 @@ curl -s http://127.0.0.1/ready             # 200 com mongodb e businessmap_api_k
 journalctl -u 'businessmap-*' -n 50 -o cat # logs JSON, sem segredos
 ```
 
-Depois de um reboot os serviços e o timer arrancam sozinhos (testes de aceitação em G4).
+## Testes de aceitação operacionais
+
+`sudo deploy/acceptance.sh` (só leitura; sai com 1 se houver FALHA) verifica:
+
+- `mongodb44`, `nginx`, `businessmap-api`, `businessmap-worker` e `businessmap-sync.timer` ativos e com arranque automático; última sync do timer bem sucedida e próxima agendada;
+- HTTP: SPA em `/` e em rotas profundas (`/reports`), `/health`, `/ready`, `/api/v1/boards` e a API direta em `127.0.0.1:8000`; boards ativos não desatualizados;
+- portas 8000 e 27017 só em loopback, Nginx na 80, UFW ativo;
+- `.env` com dono `boardinsight` e modo 600, exportações graváveis e código não gravável pelo serviço;
+- `python -m app.ops.check_mongodb` (hardening);
+- **logs sem credenciais**: journald dos `businessmap-*` (desde o boot ou `--since`), logs do Nginx e do `mongod` passam por `python -m app.ops.check_logs`, que procura a API Key e a password configuradas (também URL-encoded) e padrões `apikey=`/`password=`/`mongodb://user:pass@` por redigir. Só indica ficheiro e número da linha, nunca o conteúdo.
+
+### Checklist de reboot
+
+1. `sudo deploy/acceptance.sh` → todos OK.
+2. Na UI: sincronizar manualmente um board e gerar uma exportação PDF (exercita worker, Businessmap e logs).
+3. `sudo reboot`.
+4. Sem intervenção manual, esperar ~3 min (o timer corre 2 min após o boot) e correr `sudo deploy/acceptance.sh --after-reboot` → todos OK (exige boot há menos de 60 min).
+5. Abrir o site a partir de outro PC da LAN (`http://<ip-do-servidor>/`) e confirmar dashboards e download da exportação do passo 2.
