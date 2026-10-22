@@ -29,13 +29,33 @@ class RateLimiter:
         """Regista um pedido; devolve os segundos até haver vaga se o limite foi excedido."""
         now = self._clock()
         with self._lock:
-            hits = self._hits.setdefault((bucket, key), deque())
-            while hits and hits[0] <= now - window:
-                hits.popleft()
-            if len(hits) >= limit:
-                return hits[0] + window - now
-            hits.append(now)
-            return None
+            retry_after = self._retry_after(bucket, key, limit, window, now)
+            if retry_after is None:
+                self._hits[(bucket, key)].append(now)
+            return retry_after
+
+    def check(self, bucket: str, key: str, limit: int, window: float = WINDOW_SECONDS) -> float | None:
+        """Como `hit`, mas sem registar (ex.: só as tentativas de login falhadas contam)."""
+        now = self._clock()
+        with self._lock:
+            return self._retry_after(bucket, key, limit, window, now)
+
+    def record(self, bucket: str, key: str) -> None:
+        now = self._clock()
+        with self._lock:
+            self._hits.setdefault((bucket, key), deque()).append(now)
+
+    def reset(self, bucket: str, key: str) -> None:
+        with self._lock:
+            self._hits.pop((bucket, key), None)
+
+    def _retry_after(self, bucket: str, key: str, limit: int, window: float, now: float) -> float | None:
+        hits = self._hits.setdefault((bucket, key), deque())
+        while hits and hits[0] <= now - window:
+            hits.popleft()
+        if len(hits) >= limit:
+            return hits[0] + window - now
+        return None
 
 
 def rate_limit(bucket: Bucket):

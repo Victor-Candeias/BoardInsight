@@ -1,4 +1,5 @@
 import { Link, NavLink, Outlet } from "react-router";
+import { UserMenu } from "@/components/AuthGate";
 import { NAV_GROUPS } from "@/components/nav";
 import { BoardSelector } from "@/components/BoardSelector";
 import { SyncButton } from "@/components/SyncButton";
@@ -52,6 +53,7 @@ export function Layout() {
           <div className="flex items-center gap-3">
             {boardId !== null && <SyncButton boardId={boardId} />}
             <ThemeToggle />
+            <UserMenu />
           </div>
         </header>
         <main className="mx-auto w-full max-w-[1600px] flex-1 p-6">

@@ -16,7 +16,8 @@ def test_prepare_env_creates_env_from_template(tmp_path):
     settings = Settings(_env_file=env)
     assert settings.businessmap_base_url == "https://cttv8.kanbanize.com"
     assert settings.require_api_key() == "chave"
-    assert (settings.businessmap_board_id, settings.app_port, settings.app_host) == (96, 8081, "0.0.0.0")
+    assert (settings.businessmap_board_id, settings.app_port, settings.app_host) == (96, 8081, "127.0.0.1")
+    assert settings.auth_enabled and settings.ldap_search_base == "DC=w2k,DC=ctt,DC=pt"
     assert str(settings.frontend_dist) == dist
     assert settings.export_dir == env.parent / "exports"
     assert len(settings.mongodb_password.get_secret_value()) >= 32
@@ -34,6 +35,21 @@ def test_prepare_env_upgrade_keeps_key_and_mongo_password(tmp_path):
     assert read_env_value(env, "MONGODB_PASSWORD") == password
     assert read_env_value(env, "BUSINESSMAP_BOARD_ID") == "120"
     assert env.read_text(encoding="utf-8").count("BUSINESSMAP_BOARD_ID=") == 1
+
+
+def test_prepare_env_upgrade_binds_localhost_and_adds_new_options(tmp_path):
+    env = tmp_path / ".env"
+    env.write_text("# .env antigo\nAPP_HOST=0.0.0.0\nAPP_PORT=8080\nAUTH_ALLOWED_GROUP=GG-BoardInsight\n", encoding="utf-8")
+
+    prepare_env(env, TEMPLATE)
+    prepare_env(env, TEMPLATE)
+
+    text = env.read_text(encoding="utf-8")
+    assert read_env_value(env, "APP_HOST") == "127.0.0.1"
+    assert read_env_value(env, "AUTH_ENABLED") == "true"
+    assert read_env_value(env, "LDAP_DOMAIN") == "w2k.ctt.pt"
+    assert read_env_value(env, "AUTH_ALLOWED_GROUP") == "GG-BoardInsight"
+    assert text.count("AUTH_ENABLED=") == 1 and text.count("APP_HOST=") == 1 and text.startswith("# .env antigo\n")
 
 
 def test_secret_file_is_generated_once(tmp_path):

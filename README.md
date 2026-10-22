@@ -334,6 +334,7 @@ Paginação obrigatória para listas; filtros com validação; datas ISO 8601; r
 - MongoDB com autenticação e bind em `127.0.0.1`; backups cifrados e restauro testado.
 - CORS restrito à origem do site; proteção contra injeções e validação de parâmetros.
 - Rate limit nos endpoints locais de sincronização/exportação.
+- Windows (G9): API só em `127.0.0.1` e login com email/password do domínio (LDAPS com certificado validado; sessão em cookie HttpOnly, só o hash do token no MongoDB; tentativas falhadas limitadas).
 - Revisão de confidencialidade: títulos e descrições dos cartões podem conter dados internos.
 
 ## 12. Configuração `.env.example`
@@ -505,3 +506,7 @@ de trabalho. O build precisa do .NET SDK 8 (`~/.dotnet`), e o instalador instala
 
 No PC Windows basta: Windows 10 1809+/Server 2019+ x64, **CPU com AVX** (MongoDB 8.0), 4 GB RAM recomendados, conta de administrador e acesso
 HTTPS ao Businessmap. Detalhes (instalação silenciosa, atualização, operação e build) em `.maestru/docs/deployment-windows.md`.
+
+Desde o G9 a instalação Windows só escuta em `127.0.0.1` (sem regra de firewall) e pede login com o email e a password do domínio,
+validados no Active Directory por LDAPS (`AUTH_ENABLED`, `LDAP_*`; nada é guardado localmente além de uma sessão). Isto revê a decisão A3
+(sem autenticação) para o Windows; o Debian e o desenvolvimento mantêm `AUTH_ENABLED=false`.

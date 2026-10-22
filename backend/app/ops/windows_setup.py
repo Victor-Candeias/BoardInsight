@@ -1,6 +1,7 @@
 """Configuração pós-instalação no Windows (chamada pelo instalador Inno Setup a cada instalação/atualização).
 
-1. Cria o `.env` a partir do modelo (se não existir) e grava os valores escolhidos no instalador; gera a
+1. Cria o `.env` a partir do modelo (se não existir; numa atualização acrescenta as opções novas do modelo) e grava os
+   valores escolhidos no instalador, com `APP_HOST=127.0.0.1` (G9); gera a
    password MongoDB da aplicação se estiver vazia. A API key chega pela variável de ambiente
    `BOARDINSIGHT_SETUP_API_KEY` (nunca pela linha de comandos); vazia = manter a atual.
 2. Cria os utilizadores MongoDB: `admin` (root, password em `--admin-secret`) pela localhost exception na
@@ -77,6 +78,17 @@ def set_env_values(path: Path, values: dict[str, str]) -> None:
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
+def missing_template_lines(env_path: Path, template: Path) -> list[str]:
+    """Linhas `KEY=valor` do modelo cujas chaves não existem no `.env` (novas opções numa atualização)."""
+    existing = env_path.read_text(encoding="utf-8").splitlines()
+    missing = []
+    for line in template.read_text(encoding="utf-8").splitlines():
+        match = re.match(r"^\s*([A-Z][A-Z0-9_]*)\s*=", line)
+        if match and not any(_key_pattern(match.group(1)).match(current) for current in existing):
+            missing.append(line.strip())
+    return missing
+
+
 def prepare_env(
     env_path: Path,
     template: Path,
@@ -96,7 +108,14 @@ def prepare_env(
     if not env_path.exists():
         env_path.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(template, env_path)
-    values: dict[str, str] = {"EXPORT_DIR": str(env_path.parent / "exports")}
+    else:
+        added = missing_template_lines(env_path, template)
+        if added:
+            text = env_path.read_text(encoding="utf-8").rstrip("\n")
+            header = "# Opções novas acrescentadas na atualização (ver o modelo env.windows):"
+            env_path.write_text("\n".join([text, "", header, *added]) + "\n", encoding="utf-8")
+    # A API só aceita ligações desta máquina (G9): sem acesso pela rede, nem em instalações antigas com 0.0.0.0.
+    values: dict[str, str] = {"EXPORT_DIR": str(env_path.parent / "exports"), "APP_HOST": "127.0.0.1"}
     if url:
         values["BUSINESSMAP_BASE_URL"] = url.strip().rstrip("/")
     if board:

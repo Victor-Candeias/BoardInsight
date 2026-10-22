@@ -13,14 +13,14 @@ afterEach(() => {
 it("renderiza a navegação principal", async () => {
   mockFetch({ "GET /api/v1/boards": () => [] });
   renderWithProviders(<App />);
-  expect(screen.getByRole("navigation", { name: "Navegação principal" })).toBeInTheDocument();
+  expect(await screen.findByRole("navigation", { name: "Navegação principal" })).toBeInTheDocument();
   expect(await screen.findByText("Nenhum board configurado")).toBeInTheDocument();
 });
 
 it("alterna o modo escuro e guarda a escolha para a próxima abertura", async () => {
   mockFetch({ "GET /api/v1/boards": () => [] });
   const { unmount } = renderWithProviders(<App />);
-  fireEvent.click(screen.getByRole("button", { name: "Mudar para modo escuro" }));
+  fireEvent.click(await screen.findByRole("button", { name: "Mudar para modo escuro" }));
   expect(document.documentElement).toHaveClass("dark");
   expect(localStorage.getItem(THEME_KEY)).toBe("dark");
   unmount();

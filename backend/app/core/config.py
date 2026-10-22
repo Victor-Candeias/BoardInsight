@@ -83,6 +83,28 @@ class Settings(BaseSettings):
     rate_limit_sync_per_minute: int = 2
     rate_limit_export_per_minute: int = 6
 
+    # Autenticação com email e password do domínio (G9). Desligada por omissão (desenvolvimento, Debian);
+    # a instalação Windows liga-a no `.env`. Credenciais validadas no Active Directory por LDAPS/StartTLS.
+    auth_enabled: bool = False
+    # Domínio AD (ex.: w2k.ctt.pt): base DN por omissão e descoberta dos DCs por DNS SRV.
+    ldap_domain: str = ""
+    # URLs dos DCs separados por vírgulas (`ldaps://dc1:636` ou `ldap://dc1` com StartTLS). Vazio = DNS SRV.
+    ldap_url: str = ""
+    ldap_base_dn: str = ""
+    # CA (PEM) que assina os certificados dos DCs. Vazio = repositório de certificados do sistema.
+    ldap_ca_file: Path | None = None
+    # Conta de serviço opcional para encontrar o utilizador pelo `mail` quando o UPN é diferente do email.
+    ldap_bind_user: str = ""
+    ldap_bind_password: SecretStr | None = None
+    ldap_timeout_seconds: float = 5.0
+    # Grupo do AD (DN, CN ou sAMAccountName) com acesso, incluindo membros de grupos aninhados. Vazio = todos.
+    auth_allowed_group: str = ""
+    # Sessão expira após este tempo sem pedidos e, em qualquer caso, após `auth_session_max_hours`.
+    auth_session_ttl_minutes: int = Field(default=480, ge=1)
+    auth_session_max_hours: int = Field(default=24, ge=1)
+    # Tentativas falhadas de login permitidas (por email e por IP) em 15 minutos.
+    auth_max_failed_logins: int = Field(default=5, ge=1)
+
     @field_validator("cors_origins", mode="before")
     @classmethod
     def _split_origins(cls, value: object) -> object:
@@ -112,7 +134,10 @@ class Settings(BaseSettings):
     def _strip_slash(cls, value: str) -> str:
         return value.rstrip("/")
 
-    @field_validator("businessmap_api_key", "mongodb_uri", "mongodb_password", "frontend_dist", mode="before")
+    @field_validator(
+        "businessmap_api_key", "mongodb_uri", "mongodb_password", "frontend_dist", "ldap_ca_file", "ldap_bind_password",
+        mode="before",
+    )
     @classmethod
     def _empty_is_none(cls, value: object) -> object:
         if isinstance(value, str) and not value.strip():
@@ -122,6 +147,13 @@ class Settings(BaseSettings):
     @property
     def tz(self) -> ZoneInfo:
         return ZoneInfo(self.app_timezone)
+
+    @property
+    def ldap_search_base(self) -> str:
+        """Base DN das pesquisas: `LDAP_BASE_DN` ou derivado do domínio (`w2k.ctt.pt` → `DC=w2k,DC=ctt,DC=pt`)."""
+        if self.ldap_base_dn.strip():
+            return self.ldap_base_dn.strip()
+        return ",".join(f"DC={part}" for part in self.ldap_domain.strip().split(".") if part)
 
     @property
     def businessmap_api_url(self) -> str:
@@ -145,7 +177,7 @@ class Settings(BaseSettings):
 
     def secret_values(self) -> list[str]:
         """Valores que nunca podem aparecer em logs (usado pelo filtro de redação)."""
-        values = [self.businessmap_api_key, self.mongodb_password, self.mongodb_uri]
+        values = [self.businessmap_api_key, self.mongodb_password, self.mongodb_uri, self.ldap_bind_password]
         return [v.get_secret_value() for v in values if v is not None and v.get_secret_value()]
 
 

@@ -1,7 +1,7 @@
 import logging
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app import __version__
@@ -9,6 +9,7 @@ from app.api import health
 from app.api.errors import install_error_handlers
 from app.api.rate_limit import RateLimiter
 from app.api.v1 import api_router
+from app.api.v1 import auth as auth_api
 from app.core.config import Settings, get_settings
 from app.core.database import get_database
 from app.core.frontend import mount_frontend
@@ -56,7 +57,9 @@ def create_app(*, init_db: bool = True, settings: Settings | None = None) -> Fas
     app.add_middleware(RequestLoggingMiddleware)
     install_error_handlers(app)
     app.include_router(health.router)
-    app.include_router(api_router, prefix="/api/v1")
+    app.include_router(auth_api.router, prefix="/api/v1")
+    # Com AUTH_ENABLED=true todas as rotas /api/v1 (exceto /auth) exigem sessão; /health, /ready e a SPA ficam públicos.
+    app.include_router(api_router, prefix="/api/v1", dependencies=[Depends(auth_api.require_user)])
     if settings.frontend_dist is not None:
         mount_frontend(app, settings.frontend_dist)
     return app

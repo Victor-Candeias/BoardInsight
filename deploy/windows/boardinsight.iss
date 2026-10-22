@@ -2,8 +2,9 @@
 ;   ISCC /DAppVersion=0.1.0 /DStageDir=<stage> /O<saída> boardinsight.iss
 ; Programa em {autopf}\BoardInsight; dados (.env, MongoDB, exportações, logs) em %ProgramData%\BoardInsight,
 ; acessíveis só a SYSTEM e Administradores e preservados em atualizações e desinstalação.
-; Instalação silenciosa: /VERYSILENT /URL= /BOARD= /PORT= (e /TASKS="" para não abrir a firewall). A API key vem da
+; Instalação silenciosa: /VERYSILENT /URL= /BOARD= /PORT=. A API key vem da
 ; variável de ambiente BOARDINSIGHT_SETUP_API_KEY e nunca da linha de comandos (o Inno regista-a no log).
+; A API só escuta em 127.0.0.1 e exige login com email e password do domínio (G9): sem regra de firewall.
 ; App desktop (G8): {app}\desktop\BoardInsight.exe (WPF + WebView2) lê o URL do site de HKLM\SOFTWARE\BoardInsight.
 
 #ifndef AppVersion
@@ -55,7 +56,6 @@ UninstallDisplayName={#AppName}
 Name: "pt"; MessagesFile: "compiler:Languages\Portuguese.isl"
 
 [Tasks]
-Name: "firewall"; Description: "Permitir o acesso ao site a partir da rede local (regra de firewall, só sub-rede local)"
 Name: "desktopicon"; Description: "Criar um atalho da app BoardInsight no ambiente de trabalho"
 
 [Dirs]
@@ -349,16 +349,10 @@ begin
     Warn('Não foi possível instalar o serviço ' + Id + '. Ver ' + DataDir + '\logs.');
 end;
 
-procedure ConfigureFirewall;
-var
-  Netsh: String;
+procedure RemoveFirewallRule;
 begin
-  Netsh := ExpandConstant('{sys}\netsh.exe');
-  RunQuiet(Netsh, 'advfirewall firewall delete rule name="' + FirewallRule + '"');
-  if WizardIsTaskSelected('firewall') then
-    if RunQuiet(Netsh, 'advfirewall firewall add rule name="' + FirewallRule + '" dir=in action=allow protocol=TCP localport=' +
-      GetPort('') + ' profile=domain,private remoteip=localsubnet') <> 0 then
-      Warn('Não foi possível criar a regra de firewall "' + FirewallRule + '".');
+  { Versões anteriores abriam a porta à rede local; a API agora só aceita ligações desta máquina (G9). }
+  RunQuiet(ExpandConstant('{sys}\netsh.exe'), 'advfirewall firewall delete rule name="' + FirewallRule + '"');
 end;
 
 procedure RemoveEmptyDirAt(const Path: String);
@@ -463,8 +457,7 @@ begin
     '\"" /SC MINUTE /MO 30 /RU SYSTEM /RL HIGHEST /F') <> 0 then
     Warn('Não foi possível criar a tarefa agendada "' + SyncTask + '".');
 
-  SetStatus('A configurar a firewall...');
-  ConfigureFirewall;
+  RemoveFirewallRule;
 
   EnsureWebView2;
 end;
@@ -484,7 +477,7 @@ begin
     ServiceCmd('boardinsight-api', 'uninstall');
     ServiceCmd('boardinsight-worker', 'uninstall');
     ServiceCmd('boardinsight-mongodb', 'uninstall');
-    RunQuiet(ExpandConstant('{sys}\netsh.exe'), 'advfirewall firewall delete rule name="' + FirewallRule + '"');
+    RemoveFirewallRule;
   end;
   if (CurUninstallStep = usPostUninstall) and (not UninstallSilent) and DirExists(DataDir) then
     if MsgBox('Apagar também os dados do BoardInsight (' + DataDir + '), incluindo a base de dados, a configuração e a API key?',

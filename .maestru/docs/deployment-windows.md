@@ -16,8 +16,9 @@ updated: 2026-10-22
 <!-- /maestru:summary -->
 
 Work-item G7 (spec `g7-spec`). Um único `BoardInsight-Setup-<versão>.exe` (cerca de 70 MB) instala tudo o que o BoardInsight
-precisa. O PC Windows não precisa de ter Python, Node, MongoDB, Nginx nem .NET. HTTP na LAN, sem HTTPS nem autenticação
-(mesma decisão do Debian, A3). Desde o G8 (spec `g8-spec`) inclui também a app desktop **BoardInsight** (WPF com
+precisa. O PC Windows não precisa de ter Python, Node, MongoDB, Nginx nem .NET. Desde o G9 a API só escuta em
+`127.0.0.1` (cada PC usa a sua instalação) e exige login com o email e a password do domínio, validados no Active
+Directory por LDAPS (revê a decisão A3 para o Windows; o Debian mantém-se sem autenticação). Desde o G8 (spec `g8-spec`) inclui também a app desktop **BoardInsight** (WPF com
 WebView2), que mostra a SPA numa janela própria.
 
 ## Requisitos do PC Windows
@@ -30,6 +31,7 @@ WebView2), que mostra a SPA numa janela própria.
 - Porta do site livre (por omissão 8080) e porta 27018 livre em 127.0.0.1 (MongoDB interno; não colide com um MongoDB
   na 27017).
 - Acesso HTTPS a `https://cttv8.kanbanize.com` e uma API key do Businessmap.
+- Para iniciar sessão: rede da empresa (ou VPN) com acesso LDAPS (TCP 636) a um controlador do domínio `w2k.ctt.pt`.
 
 ## O que fica instalado
 
@@ -39,7 +41,7 @@ WebView2), que mostra a SPA numa janela própria.
 | Dados: `.env` (com a API key), `mongodb-admin.secret`, base de dados, exportações e logs | `%ProgramData%\BoardInsight` (ACL só para SYSTEM e Administradores) |
 | Serviços WinSW, automáticos e com reinício em caso de falha | `boardinsight-mongodb`, `boardinsight-api` (API + site) e `boardinsight-worker` |
 | Sincronização a cada 30 min (conta SYSTEM) | Tarefa agendada `BoardInsight\Sync` → `sync.cmd` |
-| Regra de firewall (opcional, ativa por omissão) | `BoardInsight`: TCP na porta do site, perfis domínio e privado, só a sub-rede local |
+| Sem regra de firewall: a API só aceita ligações do próprio PC (`APP_HOST=127.0.0.1`) | A regra `BoardInsight` de versões anteriores é removida |
 | Microsoft Visual C++ Redistributable x64 (necessário ao `mongod.exe`) | Instalado em silêncio |
 | App desktop `BoardInsight.exe` (WPF, .NET Framework 4.7.2, já incluído no Windows) | `C:\Program Files\BoardInsight\desktop`; atalhos no menu Iniciar e, opcionalmente, no ambiente de trabalho |
 | URL usado pela app (`http://localhost:<porta>/`) | Registo `HKLM\SOFTWARE\BoardInsight`, valor `Url` |
@@ -65,10 +67,10 @@ No Windows não há Nginx: com `FRONTEND_DIST` definido, a própria API serve a 
    - corre `python -m app.ops.windows_setup`, que gera o `.env`, cria o admin e o utilizador `boardinsight` do MongoDB
      (`--auth`), cria os índices e regista o board inicial com um job `sync_board`;
    - arranca a API e o worker;
-   - cria a tarefa agendada e a regra de firewall;
+   - cria a tarefa agendada e remove a regra de firewall de versões anteriores;
    - instala o WebView2 Runtime, se faltar (sem rede só fica um aviso no log; a app explica como o obter).
-5. A app BoardInsight abre no fim (exceto em modo silencioso). Também se pode abrir `http://localhost:8080/` no browser,
-   ou `http://<ip-do-pc>:8080/` a partir da LAN.
+5. A app BoardInsight abre no fim (exceto em modo silencioso) e pede o email e a password do domínio. Também se pode
+   abrir `http://localhost:8080/` no browser deste PC; outros PCs não têm acesso.
 
 A API key é passada ao `windows_setup` pela variável de ambiente `BOARDINSIGHT_SETUP_API_KEY` do processo. Nunca aparece
 em argumentos nem em logs.
@@ -80,8 +82,7 @@ set BOARDINSIGHT_SETUP_API_KEY=<api key>
 BoardInsight-Setup-0.1.0.exe /VERYSILENT /SUPPRESSMSGBOXES /URL=https://cttv8.kanbanize.com /BOARD=96 /PORT=8080
 ```
 
-Juntar `/TASKS=""` para não criar a regra de firewall nem o atalho no ambiente de trabalho (`/TASKS="firewall"` mantém a
-firewall). Os códigos de saída e os avisos ficam no log do Inno
+Juntar `/TASKS=""` para não criar o atalho no ambiente de trabalho. Os códigos de saída e os avisos ficam no log do Inno
 (`%TEMP%\Setup Log *.txt`) e em `%ProgramData%\BoardInsight\logs\setup.log`.
 
 Códigos do `windows_setup`: 1 = falha no MongoDB; 2 = board inicial não registado (não fatal); 3 = falha a preparar o
@@ -92,8 +93,10 @@ vazias que ocupem o lugar de `.env` ou de `logs\sync.log`.
 
 - **Atualizar.** Correr o `.exe` da nova versão. Os campos vêm pré-preenchidos a partir do `.env` existente; deixar a API
   key em branco mantém a atual. O instalador para os serviços e a tarefa, substitui o programa e volta a configurar tudo.
-  Os dados e as passwords do MongoDB mantêm-se.
-- **Desinstalar.** Em Definições → Aplicações, ou com `unins000.exe`. Remove a tarefa, os serviços e a regra de firewall.
+  Os dados e as passwords do MongoDB mantêm-se. O `windows_setup` repõe `APP_HOST=127.0.0.1` e acrescenta ao `.env` as
+  opções novas do modelo (por exemplo `AUTH_*`/`LDAP_*` ao atualizar uma versão anterior ao G9), sem mexer nas existentes.
+- **Desinstalar.** Em Definições → Aplicações, ou com `unins000.exe`. Remove a tarefa, os serviços e a regra de firewall
+  antiga, se existir.
   No fim pergunta, com "Não" por omissão, se apaga também `%ProgramData%\BoardInsight` (base de dados, `.env` e API key).
   Em modo silencioso os dados nunca são apagados.
 
@@ -108,7 +111,7 @@ vazias que ocupem o lugar de `.env` ou de `logs\sync.log`.
   - ou `"C:\Program Files\BoardInsight\boardinsight-api.exe" restart|status`;
   - ou `sc query boardinsight-api`.
 - Para mudar a configuração, editar `%ProgramData%\BoardInsight\.env` como administrador e reiniciar a API e o worker.
-  Para mudar a porta, ajustar também a regra de firewall `BoardInsight`, ou correr de novo o instalador.
+  Para mudar a porta, correr de novo o instalador (atualiza também o URL da app desktop).
 - Sincronização manual: `schtasks /Run /TN "BoardInsight\Sync"`, ou o botão Sincronizar na interface.
 - Novos boards: página Boards (`POST /api/v1/boards`), como no Debian.
 
@@ -119,11 +122,42 @@ vazias que ocupem o lugar de `.env` ou de `logs\sync.log`.
   tenta durante 2 minutos. Depois oferece "Tentar novamente" e "Abrir no browser".
 - Links para outros sites e novas janelas abrem no browser predefinido.
 - URL, por ordem: argumento `--url <url>`, variável `BOARDINSIGHT_URL`, registo `HKLM\SOFTWARE\BoardInsight\Url`,
-  `http://localhost:8080/`. Pode apontar para outro PC da LAN (`BoardInsight.exe --url http://servidor:8080/`).
+  `http://localhost:8080/`. Pode apontar para outro servidor (ex.: a instalação Debian na LAN,
+  `BoardInsight.exe --url http://servidor:8080/`); as instalações Windows só aceitam ligações locais.
   `--devtools` ativa as ferramentas de programador.
 - Dados do WebView2 (cache, armazenamento local) em `%LOCALAPPDATA%\BoardInsight\WebView2`, por utilizador.
 - Sem WebView2 Runtime, a app mostra o botão "Obter o WebView2" (página da Microsoft).
 - Testes: `dotnet test desktop/BoardInsight.Desktop.Tests`.
+
+## Autenticação (G9)
+
+- **Login:** email e password da conta da empresa. O backend faz um *simple bind* no Active Directory, sempre sobre TLS
+  (`ldaps://`, ou `ldap://` com StartTLS obrigatório) e com o certificado do DC validado (repositório de certificados do
+  Windows ou `LDAP_CA_FILE`). Passwords vazias e emails inválidos são recusados sem contactar o domínio.
+- **Nada fica guardado localmente:** nem a password nem hashes. A sessão é um cookie `boardinsight_session` (HttpOnly,
+  SameSite=Strict) com um token aleatório; o MongoDB guarda só o SHA-256 do token na coleção `auth_sessions` (TTL).
+  A sessão expira após `AUTH_SESSION_TTL_MINUTES` sem uso (480) e, em qualquer caso, ao fim de `AUTH_SESSION_MAX_HOURS` (24).
+- **Proteção:** todas as rotas `/api/v1` exigem sessão (401 `unauthenticated`), exceto `/api/v1/auth/*`; `/health` e
+  `/ready` continuam públicos (usados pela app desktop). Após `AUTH_MAX_FAILED_LOGINS` (5) falhas em 15 minutos, por email
+  ou por IP, responde 429 `too_many_attempts`. A sincronização agendada e o worker não usam HTTP e não são afetados.
+- **Endpoints:** `POST /api/v1/auth/login` (`{email, password}`), `POST /api/v1/auth/logout`, `GET /api/v1/auth/me`.
+- **Configuração** (`%ProgramData%\BoardInsight\.env`):
+
+  | Chave | Omissão | Uso |
+  |-------|---------|-----|
+  | `AUTH_ENABLED` | `true` (Windows) | `false` volta ao acesso aberto |
+  | `LDAP_DOMAIN` | `w2k.ctt.pt` | Descoberta dos DCs (DNS SRV `_ldap._tcp.dc._msdcs.<domínio>`) e base DN |
+  | `LDAP_URL` | vazio | Lista de DCs (`ldaps://dc1:636,ldaps://dc2:636`); vazio = DNS SRV, senão `ldaps://<domínio>:636` |
+  | `LDAP_BASE_DN` | vazio | Base das pesquisas; vazio = derivado do domínio (`DC=w2k,DC=ctt,DC=pt`) |
+  | `LDAP_CA_FILE` | vazio | CA (PEM) da PKI interna, se não estiver no repositório do Windows |
+  | `LDAP_BIND_USER` / `LDAP_BIND_PASSWORD` | vazio | Conta de serviço opcional, para encontrar o utilizador pelo `mail` quando o email não é o UPN |
+  | `AUTH_ALLOWED_GROUP` | vazio | Grupo AD autorizado (nome ou DN, inclui grupos aninhados); vazio = qualquer utilizador do domínio |
+
+- **Erros no login:** 401 credenciais inválidas (password errada, conta bloqueada ou expirada; a causa do AD fica no log
+  `boardinsight-api` como `ad_reason`: 52e, 775, 532…); 403 fora do grupo autorizado; 503 `directory_unavailable` se
+  nenhum DC responde ou o certificado não é válido (fora da rede da empresa/VPN, porta 636 bloqueada, CA desconhecida).
+- **Diagnóstico:** `nltest /dsgetdc:w2k.ctt.pt`, `Test-NetConnection <dc> -Port 636` e o log `boardinsight-api.out.log`.
+  A password nunca aparece nos logs.
 
 ## Build (em Linux, sem root)
 
@@ -163,12 +197,12 @@ Feita sob Wine 11.0 neste Debian:
 - A API serve a SPA, os assets e o 404 JSON em `/api`.
 - O worker arranca.
 - A instalação silenciosa completa instala os serviços WinSW (`%BASE%` e `%ProgramData%` expandidos), o ICACLS, o
-  vc_redist e a firewall.
+  vc_redist e a regra de firewall (até ao G9; desde então já não é criada).
 - A desinstalação preserva os dados.
 
 Limites desta validação: o `mongod.exe` não corre aqui (Atom sem AVX) e o Wine não suporta `schtasks /Create`.
 **Falta validar num Windows 10/11 real:** arranque do MongoDB com `--auth`, tarefa agendada, `stopwait` dos serviços e
-acesso a partir da LAN.
+login no domínio (G9).
 
 App desktop (G8): a app compilada em Linux foi testada num Windows 11 contra um servidor de teste (ecrã de espera,
 recuperação quando o servidor arranca, SPA carregada). Falta validar a instalação completa: atalhos, valor no registo,

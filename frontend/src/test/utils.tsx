@@ -15,8 +15,9 @@ export function renderWithProviders(ui: ReactElement, { route = "/" }: { route?:
 
 type Handler = (url: URL, init?: RequestInit) => unknown | [number, unknown];
 
-/** Substitui `fetch` por um router simples: chave "MÉTODO /caminho" → handler. */
+/** Substitui `fetch` por um router simples: chave "MÉTODO /caminho" → handler. Sem rota de `/auth/me`, a autenticação está desligada. */
 export function mockFetch(routes: Record<string, Handler>) {
+  routes = { "GET /api/v1/auth/me": () => ({ authEnabled: false, user: null }), ...routes };
   const fn = vi.fn(async (input: string, init?: RequestInit) => {
     const url = new URL(input, "http://localhost");
     const handler = routes[`${init?.method ?? "GET"} ${url.pathname}`];

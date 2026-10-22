@@ -22,6 +22,8 @@ export function buildQuery(query?: Query): string {
   return s ? `?${s}` : "";
 }
 
+export const UNAUTHORIZED_EVENT = "boardinsight:unauthorized";
+
 export async function api<T>(path: string, init?: RequestInit & { query?: Query }): Promise<T> {
   const { query, ...rest } = init ?? {};
   const response = await fetch(`${path}${buildQuery(query)}`, {
@@ -29,6 +31,8 @@ export async function api<T>(path: string, init?: RequestInit & { query?: Query 
     headers: { Accept: "application/json", ...(rest.body ? { "Content-Type": "application/json" } : {}), ...rest.headers },
   });
   if (!response.ok) {
+    // Sessão expirada/terminada: o AuthGate volta a mostrar o login.
+    if (response.status === 401 && !path.startsWith("/api/v1/auth/")) window.dispatchEvent(new Event(UNAUTHORIZED_EVENT));
     let code = "http_error";
     let message = `Erro HTTP ${response.status}`;
     try {
