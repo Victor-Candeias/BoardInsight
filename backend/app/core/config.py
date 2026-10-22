@@ -71,6 +71,7 @@ class Settings(BaseSettings):
     export_dir: Path = Path("/var/lib/boardinsight/exports")
     export_retention_days: int = 30
     export_max_rows: int = 50_000
+    export_pdf_max_rows: int = 2_000
 
     retention_history_days: int = 183
     retention_raw_days: int = 30

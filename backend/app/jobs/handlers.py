@@ -1,11 +1,13 @@
 """Handlers dos tipos de job executados pelo worker."""
 
+import asyncio
 from collections.abc import Awaitable, Callable
 from typing import Any
 
 from pymongo.database import Database
 
 from app.core.config import Settings
+from app.services.reports import ReportError, run_export
 from app.services.sync import ClientFactory, SyncService
 
 Handler = Callable[[Database, Settings, dict[str, Any], str, "ClientFactory | None"], Awaitable[dict[str, Any]]]
@@ -30,4 +32,14 @@ async def sync_board(
     return data
 
 
-HANDLERS: dict[str, Handler] = {"sync_board": sync_board}
+async def report_export(
+    db: Database, settings: Settings, payload: dict[str, Any], job_id: str, client_factory: ClientFactory | None = None
+) -> dict[str, Any]:
+    # Geração CPU-bound (PDF/XLSX): fora do event loop para o worker continuar a responder a sinais.
+    try:
+        return await asyncio.to_thread(run_export, db, settings, str(payload["exportId"]))
+    except ReportError as exc:
+        raise JobFailed(exc.code, exc.message, {"exportId": payload["exportId"]}) from exc
+
+
+HANDLERS: dict[str, Handler] = {"sync_board": sync_board, "report_export": report_export}

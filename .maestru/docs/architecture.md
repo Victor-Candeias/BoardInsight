@@ -104,6 +104,8 @@ Cartões ativos que deixam de aparecer recebem `missingSince` (nunca são apagad
 - `GET /api/v1/jobs/{id}` e `GET /api/v1/boards/{id}/sync-status` permitem à UI acompanhar (botão **Atualizar** no cabeçalho, polling de 2 s).
 - O worker (`app.jobs.worker`) faz polling a cada `WORKER_POLL_SECONDS`; jobs `running` há mais de `JOB_TIMEOUT_MINUTES` passam a `error` (`timeout`).
 - `app.jobs.sync` (timer) sai com código 1 se algum board falhar e 2 se faltar a API key.
+- `POST /api/v1/reports/export` (`{boardId, format: pdf|xlsx, title?, filters, from?, to?, sort?, columns?}`) valida os filtros (mesmos nomes de `/cards`), verifica o limite (`EXPORT_MAX_ROWS`; PDF `EXPORT_PDF_MAX_ROWS`) e cria um `report_exports` + job `report_export` (HTTP 202). O worker (`services/reports.py`) escreve `EXPORT_DIR/<exportId>.<formato>`: XLSX (folhas Resumo e Cartões, datas locais, texto nunca interpretado como fórmula) ou PDF A4 paisagem (resumo, indicadores, tabela de cartões; fonte DejaVu se existir).
+- `GET /api/v1/reports/exports?boardId=` (recentes), `GET /api/v1/reports/exports/{id}` (estado; passa a `error` se o job falhou) e `GET /api/v1/reports/exports/{id}/download` (409 `export_not_ready`/`export_failed`, 410 `export_expired`). Metadados expiram por TTL e ficheiros pela retenção (`EXPORT_RETENTION_DAYS`).
 - Unidades systemd em `deploy/systemd/`.
 
 ## Erros da API
