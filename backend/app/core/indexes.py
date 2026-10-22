@@ -40,14 +40,24 @@ def index_specs(settings: Settings) -> list[IndexSpec]:
         IndexSpec("locks", [("expiresAt", ASCENDING)], "expiresAt_ttl", {"expireAfterSeconds": 0}),
         IndexSpec("jobs", [("status", ASCENDING), ("createdAt", ASCENDING)], "status_created"),
         IndexSpec("jobs", [("expiresAt", ASCENDING)], "expiresAt_ttl", {"expireAfterSeconds": 0}),
-        IndexSpec("report_definitions", [("name", ASCENDING)], "name_unique", {"unique": True}),
+        IndexSpec(
+            "report_definitions", [("boardId", ASCENDING), ("name", ASCENDING)], "board_name_unique", {"unique": True}
+        ),
         IndexSpec("report_exports", [("createdAt", DESCENDING)], "createdAt"),
         IndexSpec("report_exports", [("expiresAt", ASCENDING)], "expiresAt_ttl", {"expireAfterSeconds": 0}),
         IndexSpec("users_cache", [("boardId", ASCENDING), ("userId", ASCENDING)], "board_user_unique", {"unique": True}),
     ]
 
 
+# Índices substituídos (coleção, nome): removidos se ainda existirem.
+OBSOLETE_INDEXES = [("report_definitions", "name_unique")]
+
+
 def ensure_indexes(db: Database, settings: Settings) -> None:
+    for collection_name, index_name in OBSOLETE_INDEXES:
+        if index_name in db[collection_name].index_information():
+            db[collection_name].drop_index(index_name)
+            logger.info("índice obsoleto removido", extra={"collection": collection_name, "index": index_name})
     for spec in index_specs(settings):
         collection = db[spec.collection]
         try:

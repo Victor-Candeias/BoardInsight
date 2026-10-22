@@ -74,7 +74,7 @@ O board ativo é escolhido no cabeçalho (guardado no `localStorage`).
 | `sync_runs` | Auditoria das syncs (contagens, duração, erros) | 90 dias (TTL) |
 | `locks` | Lock por board (`expiresAt`) | TTL |
 | `jobs` | Fila de jobs (pendente → a correr → concluído/erro) | `JOB_RETENTION_DAYS` (7) após terminar (TTL) |
-| `report_definitions` | Definições de relatórios guardadas | permanente |
+| `report_definitions` | Definições de relatórios guardadas (índice único `boardId`+`name`) | permanente |
 | `report_exports` | Metadados de ficheiros exportados | 30 dias (TTL + limpeza de ficheiros) |
 | `users_cache` | Nomes dos utilizadores Businessmap por board | atualizado em cada sync |
 
@@ -106,6 +106,7 @@ Cartões ativos que deixam de aparecer recebem `missingSince` (nunca são apagad
 - `app.jobs.sync` (timer) sai com código 1 se algum board falhar e 2 se faltar a API key.
 - `POST /api/v1/reports/export` (`{boardId, format: pdf|xlsx, title?, filters, from?, to?, sort?, columns?}`) valida os filtros (mesmos nomes de `/cards`), verifica o limite (`EXPORT_MAX_ROWS`; PDF `EXPORT_PDF_MAX_ROWS`) e cria um `report_exports` + job `report_export` (HTTP 202). O worker (`services/reports.py`) escreve `EXPORT_DIR/<exportId>.<formato>`: XLSX (folhas Resumo e Cartões, datas locais, texto nunca interpretado como fórmula) ou PDF A4 paisagem (resumo, indicadores, tabela de cartões; fonte DejaVu se existir).
 - `GET /api/v1/reports/exports?boardId=` (recentes), `GET /api/v1/reports/exports/{id}` (estado; passa a `error` se o job falhou) e `GET /api/v1/reports/exports/{id}/download` (409 `export_not_ready`/`export_failed`, 410 `export_expired`). Metadados expiram por TTL e ficheiros pela retenção (`EXPORT_RETENTION_DAYS`).
+- Definições guardadas (`report_definitions`, nome único por board, sem dono: utilizador único): `GET /api/v1/reports?boardId=` (com `filtersLabel` legível), `POST /api/v1/reports` (`{boardId, name, params}`; 409 `report_name_taken`), `GET|PUT|DELETE /api/v1/reports/{id}`, `POST /api/v1/reports/{id}/export` (`{format}`; sem datas fixas usa as últimas 12 semanas). `params` = mesmo formato de `POST /reports/export` (título, filtros, período, ordenação, colunas).
 - Unidades systemd em `deploy/systemd/`.
 
 ## Erros da API

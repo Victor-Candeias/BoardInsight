@@ -1,7 +1,19 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Download } from "lucide-react";
-import { createReportExport, listReportExports, reportParamsFromQuery, type ReportExport, type ReportFormat } from "@/api/reports";
+import { Download, Trash2 } from "lucide-react";
+import {
+  createReportDefinition,
+  createReportExport,
+  deleteReportDefinition,
+  exportReportDefinition,
+  listReportDefinitions,
+  listReportExports,
+  queryFromReportParams,
+  reportParamsFromQuery,
+  type ReportDefinition,
+  type ReportExport,
+  type ReportFormat,
+} from "@/api/reports";
 import { CardFiltersBar } from "@/components/CardFiltersBar";
 import { NoBoard } from "@/components/NoBoard";
 import { PeriodControls } from "@/components/PeriodControls";
@@ -34,7 +46,16 @@ export function ReportsPage() {
   const [boardId] = useActiveBoard();
   const { query, setFilter, setFilters, clear } = useCardFilters(EXTRA_KEYS);
   const [title, setTitle] = useState("");
+  const [name, setName] = useState("");
   const queryClient = useQueryClient();
+  const refreshExports = () => queryClient.invalidateQueries({ queryKey: ["report-exports", boardId] });
+  const refreshDefinitions = () => queryClient.invalidateQueries({ queryKey: ["report-definitions", boardId] });
+
+  const definitions = useQuery({
+    queryKey: ["report-definitions", boardId],
+    queryFn: () => listReportDefinitions(boardId!),
+    enabled: boardId !== null,
+  });
 
   const exports = useQuery({
     queryKey: ["report-exports", boardId],
@@ -46,8 +67,26 @@ export function ReportsPage() {
   const create = useMutation({
     mutationFn: (format: ReportFormat) =>
       createReportExport({ boardId: boardId!, format, title: title.trim() || null, ...reportParamsFromQuery(query) }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["report-exports", boardId] }),
+    onSuccess: refreshExports,
   });
+  const save = useMutation({
+    mutationFn: () =>
+      createReportDefinition({ boardId: boardId!, name: name.trim(), params: { ...reportParamsFromQuery(query), title: title.trim() || null } }),
+    onSuccess: () => {
+      setName("");
+      return refreshDefinitions();
+    },
+  });
+  const generate = useMutation({
+    mutationFn: ({ id, format }: { id: string; format: ReportFormat }) => exportReportDefinition(id, format),
+    onSuccess: refreshExports,
+  });
+  const remove = useMutation({ mutationFn: deleteReportDefinition, onSuccess: refreshDefinitions });
+
+  const apply = (d: ReportDefinition) => {
+    setFilters(queryFromReportParams(d.params));
+    setTitle(d.params.title ?? "");
+  };
 
   if (boardId === null) return <NoBoard />;
 
@@ -77,8 +116,75 @@ export function ReportsPage() {
             </Button>
           </div>
           <ErrorAlert error={create.error} />
+          <form
+            className="flex flex-wrap items-end gap-2 border-t pt-3"
+            onSubmit={(e) => {
+              e.preventDefault();
+              save.mutate();
+            }}
+          >
+            <div className="space-y-1">
+              <Label htmlFor="definition-name">Nome da definição</Label>
+              <Input id="definition-name" className="w-64" maxLength={80} required value={name} onChange={(e) => setName(e.target.value)} />
+            </div>
+            <Button type="submit" variant="outline" disabled={save.isPending || !name.trim()}>
+              Guardar definição
+            </Button>
+          </form>
+          <ErrorAlert error={save.error} />
         </CardContent>
       </Card>
+
+      <h2 className="text-lg font-semibold">Definições guardadas</h2>
+      <ErrorAlert error={definitions.error ?? generate.error ?? remove.error} />
+      {definitions.data && definitions.data.length === 0 && (
+        <p className="text-sm text-slate-500">Sem definições. Escolha os filtros acima e guarde-os com um nome para reutilizar.</p>
+      )}
+      {definitions.data && definitions.data.length > 0 && (
+        <Card>
+          <Table>
+            <THead>
+              <TR>
+                <TH>Nome</TH>
+                <TH>Filtros</TH>
+                <TH>Período</TH>
+                <TH />
+              </TR>
+            </THead>
+            <TBody>
+              {definitions.data.map((d) => (
+                <TR key={d.id}>
+                  <TD className="font-medium">{d.name}</TD>
+                  <TD className="text-sm text-slate-600">{d.filtersLabel}</TD>
+                  <TD className="text-sm">{d.params.from || d.params.to ? `${d.params.from ?? "…"} a ${d.params.to ?? "…"}` : "Últimas 12 semanas"}</TD>
+                  <TD>
+                    <div className="flex flex-wrap justify-end gap-1">
+                      <Button size="sm" variant="ghost" onClick={() => apply(d)}>
+                        Aplicar
+                      </Button>
+                      <Button size="sm" variant="outline" disabled={generate.isPending} onClick={() => generate.mutate({ id: d.id, format: "pdf" })}>
+                        PDF
+                      </Button>
+                      <Button size="sm" variant="outline" disabled={generate.isPending} onClick={() => generate.mutate({ id: d.id, format: "xlsx" })}>
+                        XLSX
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        aria-label={`Eliminar ${d.name}`}
+                        disabled={remove.isPending}
+                        onClick={() => window.confirm(`Eliminar a definição «${d.name}»?`) && remove.mutate(d.id)}
+                      >
+                        <Trash2 className="h-4 w-4" aria-hidden="true" />
+                      </Button>
+                    </div>
+                  </TD>
+                </TR>
+              ))}
+            </TBody>
+          </Table>
+        </Card>
+      )}
 
       <h2 className="text-lg font-semibold">Exportações recentes</h2>
       <ErrorAlert error={exports.error} />

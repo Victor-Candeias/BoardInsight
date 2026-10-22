@@ -5,7 +5,7 @@ escrito em `EXPORT_DIR/<exportId>.<formato>` e descarregado depois.
 """
 
 from collections.abc import Callable
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from functools import lru_cache
 from pathlib import Path
 from typing import Annotated, Any, Literal
@@ -18,6 +18,7 @@ from pymongo.database import Database
 from app.core.config import Settings
 from app.models.cards import PRIORITY_LABELS, STATUS_LABELS
 from app.repositories.base import utcnow
+from app.repositories.jobs import JobRepository
 from app.repositories.report_exports import ReportExportRepository
 from app.services.card_query import CardEnricher, CardFilters, StateFilter, build_query, sort_spec
 from app.services.dashboard import build_dashboard
@@ -414,6 +415,34 @@ def write_pdf(path: Path, data: dict[str, Any], tz: ZoneInfo) -> None:
 
 
 WRITERS: dict[str, Callable[[Path, dict[str, Any], ZoneInfo], None]] = {"xlsx": write_xlsx, "pdf": write_pdf}
+
+
+def enqueue_export(
+    db: Database,
+    settings: Settings,
+    board_id: int,
+    fmt: ReportFormat,
+    params: ReportParams,
+    *,
+    definition_id: str | None = None,
+    default_title: str = "Relatório geral",
+) -> dict[str, Any]:
+    """Verifica o limite de linhas e cria `report_exports` + job `report_export`."""
+    total = db.cards.count_documents(build_query(board_id, params.filters.to_card_filters(), settings.tz))
+    limit = row_limit(settings, fmt)
+    if total > limit:
+        raise ReportError("export_too_large", f"{total} cartões excedem o máximo de {limit} para {fmt.upper()}; refine os filtros")
+    title = params.title or default_title
+    stored = params.model_dump(mode="json", by_alias=True)
+    stored["title"] = title
+    repo = ReportExportRepository(db)
+    export = repo.create(
+        {"boardId": board_id, "format": fmt, "report": "general", "title": title, "definitionId": definition_id, "params": stored},
+        timedelta(days=settings.export_retention_days),
+    )
+    job, _ = JobRepository(db).enqueue("report_export", {"exportId": export["id"]}, dedupe=False)
+    repo.update(export["id"], {"jobId": job["id"]})
+    return {**export, "jobId": job["id"]}
 
 
 def export_path(settings: Settings, export: dict[str, Any]) -> Path:

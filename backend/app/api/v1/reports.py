@@ -1,23 +1,49 @@
-from datetime import timedelta
 from typing import Any
 
-from fastapi import APIRouter, Query, status
+from fastapi import APIRouter, Query, Response, status
 from fastapi.responses import FileResponse
+from pydantic import BaseModel, ConfigDict, Field
 
 from app.api.deps import DB, AppSettings
 from app.api.errors import ApiError
 from app.api.v1.common import board_or_404
 from app.repositories.base import utcnow
 from app.repositories.jobs import JobRepository
+from app.repositories.report_definitions import DuplicateName, ReportDefinitionRepository
 from app.repositories.report_exports import ReportExportRepository
-from app.services.card_query import build_query
-from app.services.reports import MEDIA_TYPES, ReportFormat, ReportParams, export_path, row_limit
+from app.services.card_query import CardEnricher
+from app.services.reports import (
+    MEDIA_TYPES,
+    ReportError,
+    ReportFormat,
+    ReportParams,
+    describe_filters,
+    enqueue_export,
+    export_path,
+)
 
 router = APIRouter(prefix="/reports", tags=["reports"])
 
 
 class ExportRequest(ReportParams):
     boardId: int
+    format: ReportFormat
+
+
+class DefinitionUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    name: str = Field(min_length=1, max_length=80)
+    params: ReportParams = Field(default_factory=ReportParams)
+
+
+class DefinitionCreate(DefinitionUpdate):
+    boardId: int
+
+
+class DefinitionExport(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     format: ReportFormat
 
 
@@ -40,23 +66,19 @@ def export_or_404(db: DB, export_id: str) -> dict[str, Any]:
     return public(db, export)
 
 
+def _enqueue(db: DB, settings: AppSettings, board_id: int, fmt: ReportFormat, params: ReportParams, **kwargs: Any) -> dict[str, Any]:
+    try:
+        return public(db, enqueue_export(db, settings, board_id, fmt, params, **kwargs))
+    except ReportError as exc:
+        raise ApiError(422, exc.code, exc.message) from None
+
+
 @router.post("/export", status_code=status.HTTP_202_ACCEPTED)
 def create_export(body: ExportRequest, db: DB, settings: AppSettings) -> dict[str, Any]:
     """Valida e enfileira a geração (job `report_export`); o ficheiro é descarregado depois."""
     board_or_404(db, body.boardId)
-    total = db.cards.count_documents(build_query(body.boardId, body.filters.to_card_filters(), settings.tz))
-    limit = row_limit(settings, body.format)
-    if total > limit:
-        raise ApiError(422, "export_too_large", f"{total} cartões excedem o máximo de {limit} para {body.format.upper()}; refine os filtros")
-    params = body.model_dump(mode="json", by_alias=True, exclude={"boardId", "format"})
-    repo = ReportExportRepository(db)
-    export = repo.create(
-        {"boardId": body.boardId, "format": body.format, "report": "general", "title": body.title or "Relatório geral", "params": params},
-        timedelta(days=settings.export_retention_days),
-    )
-    job, _ = JobRepository(db).enqueue("report_export", {"exportId": export["id"]}, dedupe=False)
-    repo.update(export["id"], {"jobId": job["id"]})
-    return public(db, {**export, "jobId": job["id"]})
+    params = ReportParams.model_validate(body.model_dump(by_alias=True, exclude={"boardId", "format"}))
+    return _enqueue(db, settings, body.boardId, body.format, params)
 
 
 @router.get("/exports")
@@ -84,3 +106,74 @@ def download_export(export_id: str, db: DB, settings: AppSettings) -> FileRespon
     if not path.is_file():
         raise ApiError(410, "export_expired", "o ficheiro já não existe; gere novamente o relatório")
     return FileResponse(path, media_type=MEDIA_TYPES[export["format"]], filename=export["fileName"])
+
+
+# --- Definições guardadas ----------------------------------------------------------------------
+
+
+def _with_label(definitions: list[dict[str, Any]], enrich: CardEnricher) -> list[dict[str, Any]]:
+    params = (ReportParams.model_validate(d["params"]) for d in definitions)
+    return [{**d, "filtersLabel": describe_filters(p.filters, enrich)} for d, p in zip(definitions, params, strict=True)]
+
+
+def definition_or_404(db: DB, definition_id: str) -> dict[str, Any]:
+    definition = ReportDefinitionRepository(db).get(definition_id)
+    if definition is None:
+        raise ApiError(404, "report_not_found", "definição de relatório inexistente")
+    return definition
+
+
+def _name_taken(name: str) -> ApiError:
+    return ApiError(409, "report_name_taken", f"já existe uma definição chamada «{name}» neste board")
+
+
+@router.get("")
+def list_definitions(db: DB, board_id: int = Query(alias="boardId")) -> list[dict[str, Any]]:
+    board = board_or_404(db, board_id)
+    return _with_label(ReportDefinitionRepository(db).list(board_id), CardEnricher(db, board))
+
+
+@router.post("", status_code=status.HTTP_201_CREATED)
+def create_definition(body: DefinitionCreate, db: DB) -> dict[str, Any]:
+    board = board_or_404(db, body.boardId)
+    name = body.name.strip()
+    try:
+        created = ReportDefinitionRepository(db).create(body.boardId, name, body.params.model_dump(mode="json", by_alias=True))
+    except DuplicateName:
+        raise _name_taken(name) from None
+    return _with_label([created], CardEnricher(db, board))[0]
+
+
+@router.get("/{definition_id}")
+def get_definition(definition_id: str, db: DB) -> dict[str, Any]:
+    definition = definition_or_404(db, definition_id)
+    return _with_label([definition], CardEnricher(db, board_or_404(db, definition["boardId"])))[0]
+
+
+@router.put("/{definition_id}")
+def update_definition(definition_id: str, body: DefinitionUpdate, db: DB) -> dict[str, Any]:
+    definition = definition_or_404(db, definition_id)
+    name = body.name.strip()
+    try:
+        updated = ReportDefinitionRepository(db).update(definition_id, name, body.params.model_dump(mode="json", by_alias=True))
+    except DuplicateName:
+        raise _name_taken(name) from None
+    return _with_label([updated], CardEnricher(db, board_or_404(db, definition["boardId"])))[0]
+
+
+@router.delete("/{definition_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_definition(definition_id: str, db: DB) -> Response:
+    if not ReportDefinitionRepository(db).delete(definition_id):
+        raise ApiError(404, "report_not_found", "definição de relatório inexistente")
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.post("/{definition_id}/export", status_code=status.HTTP_202_ACCEPTED)
+def export_definition(definition_id: str, body: DefinitionExport, db: DB, settings: AppSettings) -> dict[str, Any]:
+    """Gera o relatório de uma definição guardada (sem datas fixas, usa as últimas 12 semanas)."""
+    definition = definition_or_404(db, definition_id)
+    board_or_404(db, definition["boardId"])
+    params = ReportParams.model_validate(definition["params"])
+    return _enqueue(
+        db, settings, definition["boardId"], body.format, params, definition_id=definition["id"], default_title=definition["name"]
+    )

@@ -95,3 +95,34 @@ def test_failed_expired_and_missing_exports(synced, db, settings):
     db.report_exports.update_one({"_id": ObjectId(other["id"])}, {"$set": {"expiresAt": utcnow() - timedelta(seconds=1)}})
     # O índice TTL remove o documento (o 410 cobre o atraso do TTL do MongoDB).
     assert synced.get(f"/api/v1/reports/exports/{other['id']}/download").json()["error"]["code"] == "export_not_found"
+
+
+def test_report_definitions_crud_and_export(synced, db, settings):
+    base = "/api/v1/reports"
+    body = {"boardId": 96, "name": " Semanal Ana ", "params": {"filters": {"ownerUserId": [11], "status": "todo"}, "sort": "-priority"}}
+    created = synced.post(base, json=body)
+    assert created.status_code == 201
+    definition = created.json()
+    assert definition["name"] == "Semanal Ana" and definition["params"]["filters"]["status"] == ["todo"]
+    assert definition["filtersLabel"].startswith("Estado: A fazer; Responsável: ")
+    assert synced.post(base, json=body).json()["error"]["code"] == "report_name_taken"
+    assert synced.post(base, json={**body, "name": "x", "params": {"columns": ["nope"]}}).status_code == 422
+    assert synced.post(base, json={**body, "boardId": 1}).status_code == 404
+
+    other = synced.post(base, json={"boardId": 96, "name": "Bloqueados", "params": {"filters": {"blocked": True}}}).json()
+    assert [d["name"] for d in synced.get(base, params={"boardId": 96}).json()] == ["Bloqueados", "Semanal Ana"]
+    renamed = synced.put(f"{base}/{other['id']}", json={"name": "Semanal Ana", "params": {}})
+    assert renamed.json()["error"]["code"] == "report_name_taken"
+    updated = synced.put(f"{base}/{other['id']}", json={"name": "Tudo", "params": {"title": "Visão geral"}}).json()
+    assert updated["filtersLabel"] == "Sem filtros" and updated["params"]["title"] == "Visão geral"
+
+    export = synced.post(f"{base}/{definition['id']}/export", json={"format": "xlsx"})
+    assert export.status_code == 202
+    export = export.json()
+    assert export["definitionId"] == definition["id"] and export["title"] == "Semanal Ana"
+    run_worker(db, settings)
+    assert synced.get(f"{base}/exports/{export['id']}").json()["rows"] == 1  # 5002
+
+    assert synced.delete(f"{base}/{definition['id']}").status_code == 204
+    assert synced.get(f"{base}/{definition['id']}").json()["error"]["code"] == "report_not_found"
+    assert synced.post(f"{base}/{definition['id']}/export", json={"format": "pdf"}).status_code == 404

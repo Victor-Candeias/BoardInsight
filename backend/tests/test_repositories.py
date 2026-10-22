@@ -27,3 +27,16 @@ def test_unique_index_on_cards(db):
     db.cards.insert_one({"boardId": 96, "cardId": 1})
     with pytest.raises(pymongo.errors.DuplicateKeyError):
         db.cards.insert_one({"boardId": 96, "cardId": 1})
+
+
+def test_ensure_indexes_replaces_global_report_name_index(db):
+    from app.core.config import Settings
+    from app.core.indexes import ensure_indexes
+
+    db.report_definitions.drop_index("board_name_unique")
+    db.report_definitions.create_index("name", name="name_unique", unique=True)
+    ensure_indexes(db, Settings(_env_file=None))
+    assert "name_unique" not in db.report_definitions.index_information()
+    db.report_definitions.insert_many([{"boardId": 1, "name": "A"}, {"boardId": 2, "name": "A"}])
+    with pytest.raises(pymongo.errors.DuplicateKeyError):
+        db.report_definitions.insert_one({"boardId": 1, "name": "A"})
