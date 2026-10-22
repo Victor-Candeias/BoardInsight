@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import { Link } from "react-router";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { PERIOD_KEYS } from "@/api/dashboard";
@@ -6,6 +7,7 @@ import { BlockHistoryChart, ReopenChart } from "@/charts/BlockerCharts";
 import { DistributionChart } from "@/charts/DistributionChart";
 import { CardFiltersBar } from "@/components/CardFiltersBar";
 import { DataAsOf } from "@/components/DataAsOf";
+import { ExportPdfButton } from "@/components/ExportPdfButton";
 import { KpiCard } from "@/components/KpiCard";
 import { NoBoard } from "@/components/NoBoard";
 import { PeriodControls } from "@/components/PeriodControls";
@@ -36,6 +38,7 @@ export function BlockersPage() {
   const options = { enabled: boardId !== null, placeholderData: keepPreviousData };
   const blockers = useQuery({ queryKey: ["blockers", boardId, query], queryFn: () => getBlockers(boardId!, query), ...options });
   const quality = useQuery({ queryKey: ["quality", boardId, query], queryFn: () => getQuality(boardId!, query), ...options });
+  const pageRef = useRef<HTMLDivElement>(null);
 
   if (boardId === null) return <NoBoard />;
   const b = blockers.data;
@@ -43,10 +46,13 @@ export function BlockersPage() {
   const since = b?.history.historySince;
 
   return (
-    <div className="space-y-4">
+    <div ref={pageRef} className="space-y-4">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h1 className="text-2xl font-semibold">Bloqueios e qualidade</h1>
-        {b && <DataAsOf dataAsOf={b.dataAsOf} stale={b.stale} />}
+        <div className="flex flex-wrap items-center gap-3">
+          {b && <DataAsOf dataAsOf={b.dataAsOf} stale={b.stale} />}
+          <ExportPdfButton target={pageRef} page="bloqueios-qualidade" disabled={!b || quality.isPending} />
+        </div>
       </div>
       <Card>
         <CardContent className="space-y-3 pt-6">

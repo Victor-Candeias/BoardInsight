@@ -2,7 +2,13 @@ import { screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import App from "@/App";
 import { setActiveBoardId } from "@/hooks/useActiveBoard";
+import { expectPageExportedToPdf } from "@/test/pdf";
 import { mockFetch, renderWithProviders } from "@/test/utils";
+
+vi.mock("@/lib/exportPdf", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/exportPdf")>()),
+  exportElementToPdf: vi.fn(async () => {}),
+}));
 
 const period = { from: "2026-09-01", to: "2026-10-31", granularity: "month" };
 const series = [
@@ -89,4 +95,10 @@ it("mostra bloqueios atuais, histórico observado e reaberturas", async () => {
 
   expect(requests.every((u) => u.searchParams.get("ownerUserId") === "12")).toBe(true);
   expect(requests.map((u) => u.pathname).sort()).toEqual(["/api/v1/boards/96/blockers", "/api/v1/boards/96/quality"]);
+});
+
+it("exporta a página Bloqueios e qualidade para PDF tal como aparece", async () => {
+  renderWithProviders(<App />, { route: "/blockers" });
+  await screen.findByRole("table", { name: "Cartões reabertos" });
+  await expectPageExportedToPdf("Bloqueios e qualidade", "bloqueios-qualidade");
 });
