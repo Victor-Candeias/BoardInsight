@@ -21,6 +21,7 @@ status: active
 | G3 | Rate limit em sync/export e CORS restrito | backlog | 2026-10-21 | developer | medium |  |  | C4, F1 |  |
 | G4 | Testes de aceitação operacionais (reboot, logs sem credenciais) | backlog | 2026-10-21 | developer | medium |  |  | G1 |  |
 | G7 | Instalador Windows (.exe) completo gerado em Linux | in-progress | 2026-10-22 |  | medium |  |  |  | [G7](../specs/track-g/g7-spec.md) |
+| G8 | App desktop WPF (WebView2) a envolver a SPA no instalador Windows | done | 2026-10-22 |  | medium | 2026-10-22 |  |  | [G8](../specs/track-g/g8-spec.md) |
 <!-- /maestru:summary -->
 
 <!-- maestru:work-items-list -->
@@ -34,4 +35,5 @@ status: active
 | G5 | Deploy local: units systemd de utilizador para worker de jobs e timer de sync | done | 2026-10-22 |  | high | 2026-10-22 |  |  |  |
 | G6 | Script deploy-local.sh na raiz para deploy completo em /opt/BoardInsight | done | 2026-10-22 |  | medium | 2026-10-22 |  |  |  |
 | G7 | Instalador Windows (.exe) completo gerado em Linux | in-progress | 2026-10-22 |  | medium |  |  |  | [G7](../specs/track-g/g7-spec.md) |
+| G8 | App desktop WPF (WebView2) a envolver a SPA no instalador Windows | done | 2026-10-22 |  | medium | 2026-10-22 |  |  | [G8](../specs/track-g/g8-spec.md) |
 <!-- /maestru:work-items-list -->

@@ -1,0 +1,42 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    BoardInsight Desktop (G8): janela WPF que mostra a SPA servida pelo serviço boardinsight-api através do WebView2.
+    .NET Framework 4.7.2 (incluído no Windows 10 1809+, o mínimo do instalador): o PC não precisa de instalar .NET.
+    Compila em Windows e em Linux (EnableWindowsTargeting) com o SDK .NET 8+.
+  -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net472</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <PlatformTarget>x64</PlatformTarget>
+    <AssemblyName>BoardInsight</AssemblyName>
+    <RootNamespace>BoardInsight.Desktop</RootNamespace>
+    <ApplicationIcon>BoardInsight.ico</ApplicationIcon>
+    <Version>0.1.0</Version>
+    <Product>BoardInsight</Product>
+    <Company>BoardInsight</Company>
+    <Description>BoardInsight — Turn Board Data Into Decisions</Description>
+    <Copyright>BoardInsight</Copyright>
+    <DebugType>embedded</DebugType>
+    <SatelliteResourceLanguages>pt</SatelliteResourceLanguages>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.4258.31" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="System.Net.Http" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="BoardInsight.ico" />
+    <Resource Include="..\..\frontend\public\brand\logo.png" Link="logo.png" />
+  </ItemGroup>
+
+</Project>

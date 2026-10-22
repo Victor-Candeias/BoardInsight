@@ -17,7 +17,8 @@ updated: 2026-10-22
 
 Work-item G7 (spec `g7-spec`). Um único `BoardInsight-Setup-<versão>.exe` (cerca de 70 MB) instala tudo o que o BoardInsight
 precisa. O PC Windows não precisa de ter Python, Node, MongoDB, Nginx nem .NET. HTTP na LAN, sem HTTPS nem autenticação
-(mesma decisão do Debian, A3).
+(mesma decisão do Debian, A3). Desde o G8 (spec `g8-spec`) inclui também a app desktop **BoardInsight** (WPF com
+WebView2), que mostra a SPA numa janela própria.
 
 ## Requisitos do PC Windows
 
@@ -40,6 +41,10 @@ precisa. O PC Windows não precisa de ter Python, Node, MongoDB, Nginx nem .NET.
 | Sincronização a cada 30 min (conta SYSTEM) | Tarefa agendada `BoardInsight\Sync` → `sync.cmd` |
 | Regra de firewall (opcional, ativa por omissão) | `BoardInsight`: TCP na porta do site, perfis domínio e privado, só a sub-rede local |
 | Microsoft Visual C++ Redistributable x64 (necessário ao `mongod.exe`) | Instalado em silêncio |
+| App desktop `BoardInsight.exe` (WPF, .NET Framework 4.7.2, já incluído no Windows) | `C:\Program Files\BoardInsight\desktop`; atalhos no menu Iniciar e, opcionalmente, no ambiente de trabalho |
+| URL usado pela app (`http://localhost:<porta>/`) | Registo `HKLM\SOFTWARE\BoardInsight`, valor `Url` |
+| Microsoft Edge WebView2 Runtime (só se faltar; já vem no Windows 11) | Descarregado da Microsoft (`go.microsoft.com/fwlink/p/?LinkId=2124703`) e instalado em silêncio |
+| Atalho "BoardInsight no browser" | Menu Iniciar |
 
 No Windows não há Nginx: com `FRONTEND_DIST` definido, a própria API serve a SPA na mesma origem
 (`backend/app/core/frontend.py`).
@@ -60,8 +65,10 @@ No Windows não há Nginx: com `FRONTEND_DIST` definido, a própria API serve a 
    - corre `python -m app.ops.windows_setup`, que gera o `.env`, cria o admin e o utilizador `boardinsight` do MongoDB
      (`--auth`), cria os índices e regista o board inicial com um job `sync_board`;
    - arranca a API e o worker;
-   - cria a tarefa agendada e a regra de firewall.
-5. Abrir `http://localhost:8080/`, ou `http://<ip-do-pc>:8080/` a partir da LAN.
+   - cria a tarefa agendada e a regra de firewall;
+   - instala o WebView2 Runtime, se faltar (sem rede só fica um aviso no log; a app explica como o obter).
+5. A app BoardInsight abre no fim (exceto em modo silencioso). Também se pode abrir `http://localhost:8080/` no browser,
+   ou `http://<ip-do-pc>:8080/` a partir da LAN.
 
 A API key é passada ao `windows_setup` pela variável de ambiente `BOARDINSIGHT_SETUP_API_KEY` do processo. Nunca aparece
 em argumentos nem em logs.
@@ -73,7 +80,8 @@ set BOARDINSIGHT_SETUP_API_KEY=<api key>
 BoardInsight-Setup-0.1.0.exe /VERYSILENT /SUPPRESSMSGBOXES /URL=https://cttv8.kanbanize.com /BOARD=96 /PORT=8080
 ```
 
-Juntar `/TASKS=""` para não criar a regra de firewall. Os códigos de saída e os avisos ficam no log do Inno
+Juntar `/TASKS=""` para não criar a regra de firewall nem o atalho no ambiente de trabalho (`/TASKS="firewall"` mantém a
+firewall). Os códigos de saída e os avisos ficam no log do Inno
 (`%TEMP%\Setup Log *.txt`) e em `%ProgramData%\BoardInsight\logs\setup.log`.
 
 Códigos do `windows_setup`: 1 = falha no MongoDB; 2 = board inicial não registado (não fatal); 3 = falha a preparar o
@@ -104,6 +112,19 @@ vazias que ocupem o lugar de `.env` ou de `logs\sync.log`.
 - Sincronização manual: `schtasks /Run /TN "BoardInsight\Sync"`, ou o botão Sincronizar na interface.
 - Novos boards: página Boards (`POST /api/v1/boards`), como no Debian.
 
+## App desktop (G8)
+
+- Janela WPF com WebView2 que carrega a SPA de `http://localhost:<porta>/`. Só uma instância de cada vez.
+- Enquanto a API não responde em `/health` (por exemplo logo após o arranque do Windows), mostra um ecrã de espera e
+  tenta durante 2 minutos. Depois oferece "Tentar novamente" e "Abrir no browser".
+- Links para outros sites e novas janelas abrem no browser predefinido.
+- URL, por ordem: argumento `--url <url>`, variável `BOARDINSIGHT_URL`, registo `HKLM\SOFTWARE\BoardInsight\Url`,
+  `http://localhost:8080/`. Pode apontar para outro PC da LAN (`BoardInsight.exe --url http://servidor:8080/`).
+  `--devtools` ativa as ferramentas de programador.
+- Dados do WebView2 (cache, armazenamento local) em `%LOCALAPPDATA%\BoardInsight\WebView2`, por utilizador.
+- Sem WebView2 Runtime, a app mostra o botão "Obter o WebView2" (página da Microsoft).
+- Testes: `dotnet test desktop/BoardInsight.Desktop.Tests`.
+
 ## Build (em Linux, sem root)
 
 ```bash
@@ -111,8 +132,9 @@ deploy/windows/build-installer.sh            # ou --skip-frontend para reutiliza
 # -> dist/windows/BoardInsight-Setup-<versão>.exe (+ .sha256); versão = backend/app/__init__.py
 ```
 
-- **Requisitos:** `python3` (3.13 para pré-compilar o bytecode) com `pip`, `npm`, `curl`, `tar` e `rsync`. São precisos
-  cerca de 3 GB livres na cache, sobretudo pelo ZIP do MongoDB (800 MB).
+- **Requisitos:** `python3` (3.13 para pré-compilar o bytecode) com `pip`, `npm`, `curl`, `tar` e `rsync`, e o
+  **.NET SDK 8** (no PATH ou em `~/.dotnet`, por exemplo com `dotnet-install.sh --channel 8.0`) para compilar a app
+  desktop. São precisos cerca de 3 GB livres na cache, sobretudo pelo ZIP do MongoDB (800 MB).
 - **Processo:**
   - Descarrega e verifica (SHA256 de `deploy/windows/versions.env`):
     - Python 3.13 embeddable;
@@ -121,6 +143,8 @@ deploy/windows/build-installer.sh            # ou --skip-frontend para reutiliza
     - Inno Setup 6.7;
     - Wine 11.0 portátil (Kron4ek). Se existir um `wine` no sistema, usa esse.
   - Instala as dependências do `requirements.lock` como wheels `win_amd64`/cp313 (`pip --platform`), mais o `tzdata`.
+  - Compila a app desktop (`desktop/BoardInsight.Desktop`) com `dotnet publish` para `app/desktop`. O WPF para
+    `net472` compila em Linux graças a `EnableWindowsTargeting` e aos pacotes de reference assemblies.
   - Compila o `deploy/windows/boardinsight.iss` com o ISCC sob Wine, com o driver gráfico `null`, sem display. Demora
     cerca de 3 minutos num Atom.
 - **Variáveis:**
@@ -145,3 +169,8 @@ Feita sob Wine 11.0 neste Debian:
 Limites desta validação: o `mongod.exe` não corre aqui (Atom sem AVX) e o Wine não suporta `schtasks /Create`.
 **Falta validar num Windows 10/11 real:** arranque do MongoDB com `--auth`, tarefa agendada, `stopwait` dos serviços e
 acesso a partir da LAN.
+
+App desktop (G8): a app compilada em Linux foi testada num Windows 11 contra um servidor de teste (ecrã de espera,
+recuperação quando o servidor arranca, SPA carregada). Falta validar a instalação completa: atalhos, valor no registo,
+instalação do WebView2 Runtime quando falta e o `AppMutex` numa atualização. O bootstrapper do WebView2 é descarregado
+por HTTPS da Microsoft no momento da instalação, sem SHA256 fixo (o ficheiro muda com cada versão).

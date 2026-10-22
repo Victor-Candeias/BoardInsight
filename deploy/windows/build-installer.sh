@@ -9,11 +9,13 @@
 # Passos:
 #  1. Frontend: npm ci (se node_modules faltar, estiver incompleto ou desatualizado) e npm run build.
 #  2. Python 3.13 embeddable para Windows + dependências win_amd64 (pip --platform) + backend/app, pré-compilado.
-#  3. MongoDB (só mongod.exe e vc_redist.x64.exe do ZIP oficial) e WinSW.
-#  4. Inno Setup sob Wine (driver gráfico "null", sem display) -> dist/windows/BoardInsight-Setup-<versão>.exe
+#  3. App desktop WPF/WebView2 (desktop/BoardInsight.Desktop, .NET Framework 4.7.2) com dotnet publish (G8).
+#  4. MongoDB (só mongod.exe e vc_redist.x64.exe do ZIP oficial) e WinSW.
+#  5. Inno Setup sob Wine (driver gráfico "null", sem display) -> dist/windows/BoardInsight-Setup-<versão>.exe
 #
 # Downloads, Wine portátil e prefixo Wine ficam em ${BOARDINSIGHT_BUILD_CACHE:-~/.cache/boardinsight-windows-build};
 # cada download é verificado com o SHA256 de versions.env. Usa o Wine do sistema se existir (ou WINE=/caminho/wine).
+# O SDK .NET 8+ vem do PATH, de ~/.dotnet (dotnet-install.sh, sem root) ou de DOTNET=/caminho/dotnet.
 set -euo pipefail
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
@@ -43,6 +45,10 @@ for cmd in python3 npm curl sha256sum tar rsync; do
   command -v "$cmd" >/dev/null || die "comando em falta: $cmd"
 done
 python3 -m pip --version >/dev/null 2>&1 || die "pip em falta (python3 -m pip)"
+if [[ -z "${DOTNET:-}" ]]; then
+  if command -v dotnet >/dev/null; then DOTNET="$(command -v dotnet)"; else DOTNET="$HOME/.dotnet/dotnet"; fi
+fi
+[[ -x "$DOTNET" ]] || die "SDK .NET em falta: instalar com dotnet-install.sh --channel 8.0 (ver deployment-windows) ou DOTNET=/caminho/dotnet"
 
 # Descarrega para $DOWNLOADS (se ainda não estiver lá) e valida o SHA256. Escreve o caminho no stdout.
 fetch() {
@@ -99,7 +105,19 @@ else
   warn "python3 local não é 3.13: sem pré-compilação"
 fi
 
-# 3. MongoDB, VC++ Redistributable, WinSW e ficheiros de serviço
+# 3. App desktop (WPF + WebView2). Compila uma cópia em $STAGE/src para não misturar bin/obj de Linux e Windows.
+log "app desktop (WPF, .NET Framework 4.7.2)"
+mkdir -p "$STAGE/src/frontend/public"
+rsync -a --exclude bin --exclude obj "$ROOT/desktop/" "$STAGE/src/desktop/"
+cp -r "$ROOT/frontend/public/brand" "$STAGE/src/frontend/public/brand"
+DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1 "$DOTNET" publish \
+  "$STAGE/src/desktop/BoardInsight.Desktop/BoardInsight.Desktop.csproj" -c Release -nologo -v q \
+  "-p:Version=$VERSION" -o "$APP/desktop"
+[[ -f "$APP/desktop/BoardInsight.exe" ]] || die "dotnet publish não gerou BoardInsight.exe"
+mkdir -p "$STAGE/setup"
+cp "$ROOT/desktop/BoardInsight.Desktop/BoardInsight.ico" "$STAGE/setup/BoardInsight.ico"
+
+# 4. MongoDB, VC++ Redistributable, WinSW e ficheiros de serviço
 log "mongodb $MONGODB_VERSION (mongod.exe)"
 python3 - "$(fetch "$MONGODB_URL" "$MONGODB_SHA256")" "$APP/mongodb" "$STAGE/redist" <<'PY'
 import shutil, sys, zipfile
@@ -124,7 +142,7 @@ cp "$HERE"/services/*.xml "$HERE/sync.cmd" "$APP/"
 mkdir -p "$APP/config"
 cp "$HERE/env.windows" "$APP/config/env.windows"
 
-# 4. Inno Setup sob Wine
+# 5. Inno Setup sob Wine
 if [[ -z "${WINE:-}" ]]; then
   if command -v wine >/dev/null; then
     WINE="$(command -v wine)"

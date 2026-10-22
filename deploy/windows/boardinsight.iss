@@ -4,6 +4,7 @@
 ; acessíveis só a SYSTEM e Administradores e preservados em atualizações e desinstalação.
 ; Instalação silenciosa: /VERYSILENT /URL= /BOARD= /PORT= (e /TASKS="" para não abrir a firewall). A API key vem da
 ; variável de ambiente BOARDINSIGHT_SETUP_API_KEY e nunca da linha de comandos (o Inno regista-a no log).
+; App desktop (G8): {app}\desktop\BoardInsight.exe (WPF + WebView2) lê o URL do site de HKLM\SOFTWARE\BoardInsight.
 
 #ifndef AppVersion
   #define AppVersion "0.0.0"
@@ -17,6 +18,10 @@
 #define DefaultUrl "https://cttv8.kanbanize.com"
 #define DefaultBoard "96"
 #define DefaultPort "8080"
+#define DesktopExe "{app}\desktop\BoardInsight.exe"
+; Evergreen Bootstrapper do Microsoft Edge WebView2 Runtime (descarregado só se o runtime faltar).
+#define WebView2BootstrapperUrl "https://go.microsoft.com/fwlink/p/?LinkId=2124703"
+#define WebView2ClientKey "SOFTWARE\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}"
 
 [Setup]
 AppId={{8C1B6E2A-4F3D-4B7E-9A51-3D2C7E9F1A60}
@@ -40,6 +45,10 @@ WizardStyle=modern
 SetupLogging=yes
 TimeStampsInUTC=yes
 CloseApplications=no
+; A app desktop cria este mutex: o instalador pede para a fechar antes de atualizar ou desinstalar.
+AppMutex=BoardInsight.Desktop
+SetupIconFile={#StageDir}\setup\BoardInsight.ico
+UninstallDisplayIcon={#DesktopExe}
 UninstallDisplayName={#AppName}
 
 [Languages]
@@ -47,6 +56,7 @@ Name: "pt"; MessagesFile: "compiler:Languages\Portuguese.isl"
 
 [Tasks]
 Name: "firewall"; Description: "Permitir o acesso ao site a partir da rede local (regra de firewall, só sub-rede local)"
+Name: "desktopicon"; Description: "Criar um atalho da app BoardInsight no ambiente de trabalho"
 
 [Dirs]
 Name: "{#DataDir}"; Flags: uninsneveruninstall
@@ -61,21 +71,32 @@ Source: "{#StageDir}\winsw\WinSW-x64.exe"; DestDir: "{app}"; DestName: "boardins
 Source: "{#StageDir}\winsw\WinSW-x64.exe"; DestDir: "{app}"; DestName: "boardinsight-worker.exe"; Flags: ignoreversion
 Source: "{#StageDir}\redist\vc_redist.x64.exe"; DestDir: "{tmp}"; Flags: deleteafterinstall
 
+[InstallDelete]
+; Atalho de versões anteriores ao G8 (substituído por "BoardInsight no browser").
+Type: files; Name: "{group}\Abrir o BoardInsight.url"
+
 [INI]
-Filename: "{group}\Abrir o BoardInsight.url"; Section: "InternetShortcut"; Key: "URL"; String: "http://localhost:{code:GetPort}/"
+Filename: "{group}\BoardInsight no browser.url"; Section: "InternetShortcut"; Key: "URL"; String: "http://localhost:{code:GetPort}/"
+
+[Registry]
+Root: HKLM; Subkey: "SOFTWARE\BoardInsight"; ValueType: string; ValueName: "Url"; ValueData: "http://localhost:{code:GetPort}/"; Flags: uninsdeletekey
 
 [Icons]
+Name: "{group}\BoardInsight"; Filename: "{#DesktopExe}"; WorkingDir: "{app}\desktop"; Comment: "BoardInsight (app desktop)"
+Name: "{autodesktop}\BoardInsight"; Filename: "{#DesktopExe}"; WorkingDir: "{app}\desktop"; Comment: "BoardInsight (app desktop)"; Tasks: desktopicon
 Name: "{group}\Logs do BoardInsight"; Filename: "{#DataDir}\logs"
 Name: "{group}\Desinstalar o BoardInsight"; Filename: "{uninstallexe}"
 
 [Run]
-Filename: "http://localhost:{code:GetPort}/"; Description: "Abrir o BoardInsight no browser"; Flags: postinstall shellexec nowait skipifsilent
+Filename: "{#DesktopExe}"; Description: "Abrir o BoardInsight"; Flags: postinstall nowait skipifsilent runasoriginaluser
 
 [UninstallDelete]
+Type: files; Name: "{group}\BoardInsight no browser.url"
 Type: files; Name: "{group}\Abrir o BoardInsight.url"
 Type: filesandordirs; Name: "{app}\backend"
 Type: filesandordirs; Name: "{app}\python"
 Type: filesandordirs; Name: "{app}\mongodb"
+Type: filesandordirs; Name: "{app}\desktop"
 Type: dirifempty; Name: "{app}"
 
 [Code]
@@ -347,6 +368,46 @@ begin
     Log('pasta vazia removida: ' + Path);
 end;
 
+function WebView2Version(const RootKey: Integer): String;
+begin
+  if not RegQueryStringValue(RootKey, '{#WebView2ClientKey}', 'pv', Result) then
+    Result := '';
+  if Result = '0.0.0.0' then
+    Result := '';
+end;
+
+function WebView2Installed: Boolean;
+var
+  Version: String;
+begin
+  { Instalação por máquina (HKLM 32 bits) ou por utilizador (HKCU), como indicado pela Microsoft. }
+  Version := WebView2Version(HKLM32);
+  if Version = '' then
+    Version := WebView2Version(HKCU);
+  Result := Version <> '';
+  if Result then
+    Log('WebView2 Runtime ' + Version);
+end;
+
+procedure EnsureWebView2;
+var
+  Code: Integer;
+begin
+  if WebView2Installed then
+    Exit;
+  SetStatus('A instalar o Microsoft Edge WebView2 Runtime...');
+  try
+    DownloadTemporaryFile('{#WebView2BootstrapperUrl}', 'MicrosoftEdgeWebview2Setup.exe', '', nil);
+    Code := RunQuiet(ExpandConstant('{tmp}\MicrosoftEdgeWebview2Setup.exe'), '/silent /install');
+  except
+    Log('download do WebView2 Runtime: ' + GetExceptionMessage);
+    Code := -1;
+  end;
+  if (Code <> 0) or not WebView2Installed then
+    Warn('Não foi possível instalar o Microsoft Edge WebView2 Runtime (código ' + IntToStr(Code) + '). ' +
+      'A app BoardInsight explica como o obter; entretanto use o atalho "BoardInsight no browser".');
+end;
+
 procedure PostInstall;
 var
   Code: Integer;
@@ -404,6 +465,8 @@ begin
 
   SetStatus('A configurar a firewall...');
   ConfigureFirewall;
+
+  EnsureWebView2;
 end;
 
 procedure CurStepChanged(CurStep: TSetupStep);

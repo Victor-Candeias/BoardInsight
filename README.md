@@ -500,6 +500,8 @@ Instalador `.exe` autónomo (G7), gerado em Linux: `deploy/windows/build-install
 Inclui Python 3.13 embutido, o site compilado (servido pela própria API, sem Nginx), MongoDB 8.0 (só `127.0.0.1:27018`, com autenticação)
 e três serviços WinSW (`boardinsight-mongodb`, `boardinsight-api`, `boardinsight-worker`), mais a tarefa agendada `BoardInsight\Sync` (30 min).
 Durante a instalação pede o URL da instância (`https://cttv8.kanbanize.com`), a API key (campo mascarado), o board inicial (`96`) e a porta (`8080`).
+Inclui também a app desktop **BoardInsight** (G8, `desktop/`): uma janela WPF com WebView2 que mostra o site, com atalhos no menu Iniciar e no ambiente
+de trabalho. O build precisa do .NET SDK 8 (`~/.dotnet`), e o instalador instala o WebView2 Runtime se faltar.
 
 No PC Windows basta: Windows 10 1809+/Server 2019+ x64, **CPU com AVX** (MongoDB 8.0), 4 GB RAM recomendados, conta de administrador e acesso
 HTTPS ao Businessmap. Detalhes (instalação silenciosa, atualização, operação e build) em `.maestru/docs/deployment-windows.md`.
