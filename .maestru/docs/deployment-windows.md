@@ -17,8 +17,8 @@ updated: 2026-10-22
 
 Work-item G7 (spec `g7-spec`). Um único `BoardInsight-Setup-<versão>.exe` (cerca de 70 MB) instala tudo o que o BoardInsight
 precisa. O PC Windows não precisa de ter Python, Node, MongoDB, Nginx nem .NET. Desde o G9 a API só escuta em
-`127.0.0.1` (cada PC usa a sua instalação) e exige login com o email e a password do domínio, validados no Active
-Directory por LDAPS (revê a decisão A3 para o Windows; o Debian mantém-se sem autenticação). Desde o G8 (spec `g8-spec`) inclui também a app desktop **BoardInsight** (WPF com
+`127.0.0.1` (cada PC usa a sua instalação). O login com o email e a password do domínio (G9, Active Directory por LDAPS)
+está implementado mas desligado desde o G10 (`AUTH_ENABLED=false`): a app abre sem janela de login. Desde o G8 (spec `g8-spec`) inclui também a app desktop **BoardInsight** (WPF com
 WebView2), que mostra a SPA numa janela própria.
 
 ## Requisitos do PC Windows
@@ -79,7 +79,7 @@ em argumentos nem em logs.
 
 ```bat
 set BOARDINSIGHT_SETUP_API_KEY=<api key>
-BoardInsight-Setup-0.1.0.exe /VERYSILENT /SUPPRESSMSGBOXES /URL=https://cttv8.kanbanize.com /BOARD=96 /PORT=8080
+BoardInsight-Setup-0.2.0.exe /VERYSILENT /SUPPRESSMSGBOXES /URL=https://cttv8.kanbanize.com /BOARD=96 /PORT=8080
 ```
 
 Juntar `/TASKS=""` para não criar o atalho no ambiente de trabalho. Os códigos de saída e os avisos ficam no log do Inno
@@ -93,8 +93,9 @@ vazias que ocupem o lugar de `.env` ou de `logs\sync.log`.
 
 - **Atualizar.** Correr o `.exe` da nova versão. Os campos vêm pré-preenchidos a partir do `.env` existente; deixar a API
   key em branco mantém a atual. O instalador para os serviços e a tarefa, substitui o programa e volta a configurar tudo.
-  Os dados e as passwords do MongoDB mantêm-se. O `windows_setup` repõe `APP_HOST=127.0.0.1` e acrescenta ao `.env` as
-  opções novas do modelo (por exemplo `AUTH_*`/`LDAP_*` ao atualizar uma versão anterior ao G9), sem mexer nas existentes.
+  Os dados e as passwords do MongoDB mantêm-se. O `windows_setup` repõe `APP_HOST=127.0.0.1` e `AUTH_ENABLED=false` (G10)
+  e acrescenta ao `.env` as opções novas do modelo (por exemplo `AUTH_*`/`LDAP_*` ao atualizar uma versão anterior ao G9),
+  sem mexer nas restantes.
 - **Desinstalar.** Em Definições → Aplicações, ou com `unins000.exe`. Remove a tarefa, os serviços e a regra de firewall
   antiga, se existir.
   No fim pergunta, com "Não" por omissão, se apaga também `%ProgramData%\BoardInsight` (base de dados, `.env` e API key).
@@ -129,7 +130,12 @@ vazias que ocupem o lugar de `.env` ou de `logs\sync.log`.
 - Sem WebView2 Runtime, a app mostra o botão "Obter o WebView2" (página da Microsoft).
 - Testes: `dotnet test desktop/BoardInsight.Desktop.Tests`.
 
-## Autenticação (G9)
+## Autenticação (G9; desligada desde o G10)
+
+> **Estado atual (G10, versão 0.2.0):** sem janela de login. O instalador grava `AUTH_ENABLED=false` em cada
+> instalação/atualização (também nos PCs instalados com o pacote que a ligava). O código fica disponível: para voltar a
+> pedir login, pôr `AUTH_ENABLED=true` no `.env` e reiniciar o `boardinsight-api` (uma atualização volta a desligar) ou
+> alterar o `windows_setup`/`env.windows` num work-item próprio.
 
 - **Login:** email e password da conta da empresa. O backend faz um *simple bind* no Active Directory, sempre sobre TLS
   (`ldaps://`, ou `ldap://` com StartTLS obrigatório) e com o certificado do DC validado (repositório de certificados do
@@ -145,7 +151,7 @@ vazias que ocupem o lugar de `.env` ou de `logs\sync.log`.
 
   | Chave | Omissão | Uso |
   |-------|---------|-----|
-  | `AUTH_ENABLED` | `true` (Windows) | `false` volta ao acesso aberto |
+  | `AUTH_ENABLED` | `false` (G10; reposto pelo instalador) | `true` pede login com o email e a password do domínio |
   | `LDAP_DOMAIN` | `w2k.ctt.pt` | Descoberta dos DCs (DNS SRV `_ldap._tcp.dc._msdcs.<domínio>`) e base DN |
   | `LDAP_URL` | vazio | Lista de DCs (`ldaps://dc1:636,ldaps://dc2:636`); vazio = DNS SRV, senão `ldaps://<domínio>:636` |
   | `LDAP_BASE_DN` | vazio | Base das pesquisas; vazio = derivado do domínio (`DC=w2k,DC=ctt,DC=pt`) |
@@ -202,7 +208,7 @@ Feita sob Wine 11.0 neste Debian:
 
 Limites desta validação: o `mongod.exe` não corre aqui (Atom sem AVX) e o Wine não suporta `schtasks /Create`.
 **Falta validar num Windows 10/11 real:** arranque do MongoDB com `--auth`, tarefa agendada, `stopwait` dos serviços e
-login no domínio (G9).
+login no domínio (G9, quando for ligado).
 
 App desktop (G8): a app compilada em Linux foi testada num Windows 11 contra um servidor de teste (ecrã de espera,
 recuperação quando o servidor arranca, SPA carregada). Falta validar a instalação completa: atalhos, valor no registo,

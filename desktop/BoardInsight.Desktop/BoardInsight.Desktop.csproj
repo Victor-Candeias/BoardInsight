@@ -16,7 +16,7 @@
     <AssemblyName>BoardInsight</AssemblyName>
     <RootNamespace>BoardInsight.Desktop</RootNamespace>
     <ApplicationIcon>BoardInsight.ico</ApplicationIcon>
-    <Version>0.1.0</Version>
+    <Version>0.2.0</Version>
     <Product>BoardInsight</Product>
     <Company>BoardInsight</Company>
     <Description>BoardInsight — Turn Board Data Into Decisions</Description>

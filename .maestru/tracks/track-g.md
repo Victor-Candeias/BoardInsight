@@ -23,6 +23,7 @@ status: active
 | G7 | Instalador Windows (.exe) completo gerado em Linux | in-progress | 2026-10-22 |  | medium |  |  |  | [G7](../specs/track-g/g7-spec.md) |
 | G8 | App desktop WPF (WebView2) a envolver a SPA no instalador Windows | done | 2026-10-22 |  | medium | 2026-10-22 |  |  | [G8](../specs/track-g/g8-spec.md) |
 | G9 | Autenticação com email e password do domínio (LDAPS) e API só em 127.0.0.1 | done | 2026-10-22 |  | high | 2026-10-22 |  |  | [G9](../specs/track-g/g9-spec.md) |
+| G10 | Desligar o login no instalador Windows e gerar pacote versionado 0.2.0 | done | 2026-10-22 |  | high | 2026-10-22 |  |  |  |
 <!-- /maestru:summary -->
 
 <!-- maestru:work-items-list -->
@@ -38,4 +39,5 @@ status: active
 | G7 | Instalador Windows (.exe) completo gerado em Linux | in-progress | 2026-10-22 |  | medium |  |  |  | [G7](../specs/track-g/g7-spec.md) |
 | G8 | App desktop WPF (WebView2) a envolver a SPA no instalador Windows | done | 2026-10-22 |  | medium | 2026-10-22 |  |  | [G8](../specs/track-g/g8-spec.md) |
 | G9 | Autenticação com email e password do domínio (LDAPS) e API só em 127.0.0.1 | done | 2026-10-22 |  | high | 2026-10-22 |  |  | [G9](../specs/track-g/g9-spec.md) |
+| G10 | Desligar o login no instalador Windows e gerar pacote versionado 0.2.0 | done | 2026-10-22 |  | high | 2026-10-22 |  |  |  |
 <!-- /maestru:work-items-list -->

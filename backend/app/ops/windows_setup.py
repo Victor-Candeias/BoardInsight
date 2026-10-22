@@ -1,7 +1,7 @@
 """Configuração pós-instalação no Windows (chamada pelo instalador Inno Setup a cada instalação/atualização).
 
 1. Cria o `.env` a partir do modelo (se não existir; numa atualização acrescenta as opções novas do modelo) e grava os
-   valores escolhidos no instalador, com `APP_HOST=127.0.0.1` (G9); gera a
+   valores escolhidos no instalador, com `APP_HOST=127.0.0.1` (G9) e `AUTH_ENABLED=false` (G10); gera a
    password MongoDB da aplicação se estiver vazia. A API key chega pela variável de ambiente
    `BOARDINSIGHT_SETUP_API_KEY` (nunca pela linha de comandos); vazia = manter a atual.
 2. Cria os utilizadores MongoDB: `admin` (root, password em `--admin-secret`) pela localhost exception na
@@ -115,7 +115,12 @@ def prepare_env(
             header = "# Opções novas acrescentadas na atualização (ver o modelo env.windows):"
             env_path.write_text("\n".join([text, "", header, *added]) + "\n", encoding="utf-8")
     # A API só aceita ligações desta máquina (G9): sem acesso pela rede, nem em instalações antigas com 0.0.0.0.
-    values: dict[str, str] = {"EXPORT_DIR": str(env_path.parent / "exports"), "APP_HOST": "127.0.0.1"}
+    # Sem janela de login (G10): desliga também instalações feitas com o pacote que a ligava; o código G9 fica disponível.
+    values: dict[str, str] = {
+        "EXPORT_DIR": str(env_path.parent / "exports"),
+        "APP_HOST": "127.0.0.1",
+        "AUTH_ENABLED": "false",
+    }
     if url:
         values["BUSINESSMAP_BASE_URL"] = url.strip().rstrip("/")
     if board:
