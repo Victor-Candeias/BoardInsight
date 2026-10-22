@@ -55,7 +55,7 @@ class Settings(BaseSettings):
 
     businessmap_base_url: str = "https://cttv8.kanbanize.com"
     businessmap_api_key: SecretStr | None = None
-    businessmap_default_board_id: int = 96
+    businessmap_board_id: int = 96
     businessmap_timeout_seconds: float = 30.0
     businessmap_max_retries: int = 4
     businessmap_page_size: int = 200

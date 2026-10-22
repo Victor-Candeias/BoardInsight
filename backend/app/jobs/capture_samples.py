@@ -89,7 +89,7 @@ async def capture(board_id: int, out: Path, max_cards: int) -> dict[str, Any]:
 def main() -> None:
     settings = get_settings()
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--board", type=int, default=settings.businessmap_default_board_id)
+    parser.add_argument("--board", type=int, default=settings.businessmap_board_id)
     parser.add_argument("--out", type=Path, default=Path("samples"))
     parser.add_argument("--cards", type=int, default=20)
     args = parser.parse_args()

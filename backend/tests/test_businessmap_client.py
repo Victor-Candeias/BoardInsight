@@ -134,7 +134,7 @@ def test_live_board_96():
 
     async def check():
         async with BusinessmapClient.from_settings(settings) as client:
-            board = await client.get_board(settings.businessmap_default_board_id)
+            board = await client.get_board(settings.businessmap_board_id)
             page = await client.list_cards(board["board_id"], per_page=1)
             return board, page
 
