@@ -34,5 +34,5 @@ status: active
 | H4 | Exportar página Throughput para PDF | done | 2026-10-22 |  | medium | 2026-10-22 |  |  |  |
 | H5 | Exportar página Fluxo para PDF | done | 2026-10-22 |  | medium | 2026-10-22 |  |  |  |
 | H6 | Exportar página Bloqueios e qualidade para PDF | done | 2026-10-22 |  | medium | 2026-10-22 |  |  |  |
-| H7 | Exportar página Prazos para PDF | backlog | 2026-10-22 |  | medium |  |  |  |  |
+| H7 | Exportar página Prazos para PDF | done | 2026-10-22 |  | medium | 2026-10-22 |  |  |  |
 <!-- /maestru:work-items-list -->

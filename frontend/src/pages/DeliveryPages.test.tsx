@@ -94,3 +94,9 @@ it("lista cartões em atraso e a vencer com dias até ao prazo", async () => {
   expect(within(screen.getByRole("table", { name: /A vencer/ })).getByText("Nenhum prazo nos próximos dias.")).toBeInTheDocument();
   expect(screen.getByText("de 4 cartões abertos")).toBeInTheDocument();
 });
+
+it("exporta a página Prazos para PDF tal como aparece", async () => {
+  renderWithProviders(<App />, { route: "/deadlines" });
+  await screen.findByRole("table", { name: "Em atraso" });
+  await expectPageExportedToPdf("Prazos", "prazos");
+});

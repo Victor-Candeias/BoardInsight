@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import { Link } from "react-router";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { getDeadlines, type DeadlineList } from "@/api/delivery";
@@ -5,6 +6,7 @@ import { DistributionChart } from "@/charts/DistributionChart";
 import { CardFiltersBar } from "@/components/CardFiltersBar";
 import { PriorityBadge, StatusBadge } from "@/components/CardBadges";
 import { DataAsOf } from "@/components/DataAsOf";
+import { ExportPdfButton } from "@/components/ExportPdfButton";
 import { KpiCard } from "@/components/KpiCard";
 import { NoBoard } from "@/components/NoBoard";
 import { ErrorAlert, Loading } from "@/components/QueryState";
@@ -75,6 +77,7 @@ function DeadlineTable({ title, list, empty }: { title: string; list: DeadlineLi
 export function DeadlinesPage() {
   const [boardId] = useActiveBoard();
   const { query, setFilter, setFilters, clear } = useCardFilters();
+  const pageRef = useRef<HTMLDivElement>(null);
 
   const deadlines = useQuery({
     queryKey: ["deadlines", boardId, query],
@@ -87,10 +90,13 @@ export function DeadlinesPage() {
   const d = deadlines.data;
 
   return (
-    <div className="space-y-4">
+    <div ref={pageRef} className="space-y-4">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h1 className="text-2xl font-semibold">Prazos</h1>
-        {d && <DataAsOf dataAsOf={d.dataAsOf} stale={d.stale} />}
+        <div className="flex flex-wrap items-center gap-3">
+          {d && <DataAsOf dataAsOf={d.dataAsOf} stale={d.stale} />}
+          <ExportPdfButton target={pageRef} page="prazos" disabled={!d} />
+        </div>
       </div>
       <Card>
         <CardContent className="pt-6">
