@@ -482,7 +482,7 @@ O MVP está concluído quando o novo site, independente do TeamForge, corre no D
 ## 20. Desenvolvimento local (BoardInsight)
 
 A documentação viva está em `.maestru/docs/` (`architecture`, `businessmap-api-validation`,
-`metrics-definitions`); os work-items em `.maestru/tracks/`.
+`metrics-definitions`, `deployment-debian`); os work-items em `.maestru/tracks/`.
 
 ```bash
 cp .env.example .env && chmod 600 .env        # preencher MongoDB e BUSINESSMAP_API_KEY
