@@ -19,7 +19,7 @@ import { useCardFilters } from "@/hooks/useCardFilters";
 import { formatDate, formatDateTime, formatNumber } from "@/lib/format";
 
 const EXTRA_KEYS = ["sprint"];
-const HIDDEN_FILTERS = ["state", "status", "columnId", "laneId", "blocked", "createdFrom", "createdTo", "overdue", "dueSoon"];
+const HIDDEN_FILTERS = ["state", "status", "open", "columnId", "laneId", "blocked", "createdFrom", "createdTo", "overdue", "dueSoon"];
 
 function CardsTable({ label, rows, empty }: { label: string; rows: SprintCardRow[]; empty: string }) {
   return (

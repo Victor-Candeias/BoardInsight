@@ -30,6 +30,7 @@ export interface Dashboard {
   period: PeriodInfo;
   kpis: Record<
     | "total"
+    | "open"
     | "backlog"
     | "todo"
     | "inProgress"

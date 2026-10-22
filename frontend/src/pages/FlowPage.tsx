@@ -20,7 +20,7 @@ import { useCardFilters } from "@/hooks/useCardFilters";
 import { formatDays } from "@/lib/format";
 
 const EXTRA_KEYS = [...PERIOD_KEYS];
-const HIDDEN_FILTERS = ["state", "status", "createdFrom", "createdTo", "overdue", "dueSoon"];
+const HIDDEN_FILTERS = ["state", "status", "open", "createdFrom", "createdTo", "overdue", "dueSoon"];
 
 function hint(m: MetricSummary) {
   if (!m.available) return m.reason;

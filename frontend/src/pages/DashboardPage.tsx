@@ -68,7 +68,7 @@ export function DashboardPage() {
       ) : (
         <>
           <section aria-label="Indicadores" className="grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-6">
-            <KpiCard label="Cartões ativos" value={k.total} to={cardsLink(query, {})} />
+            <KpiCard label="Cartões ativos" value={k.open} to={cardsLink(query, { open: "true" })} />
             <KpiCard label="Backlog" value={k.backlog} to={cardsLink(query, { status: "backlog" })} />
             <KpiCard label="A fazer" value={k.todo} to={cardsLink(query, { status: "todo" })} />
             <KpiCard label="Em curso" value={k.inProgress} to={cardsLink(query, { status: "in_progress" })} />

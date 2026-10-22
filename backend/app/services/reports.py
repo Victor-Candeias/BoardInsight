@@ -66,6 +66,7 @@ class ReportFilters(BaseModel):
     q: str | None = Field(None, max_length=200)
     state: StateFilter = "active"
     status: list[StatusValue] = []
+    open: bool = False
     columnId: list[int] = []
     laneId: list[int] = []
     ownerUserId: list[int] = []
@@ -100,6 +101,7 @@ class ReportFilters(BaseModel):
             q=self.q or None,
             state=self.state,
             status=list(self.status),
+            open=self.open,
             column_id=self.columnId,
             lane_id=self.laneId,
             owner_user_id=self.ownerUserId,
@@ -179,6 +181,8 @@ def describe_filters(f: ReportFilters, enrich: CardEnricher) -> str:
         parts.append("Estado no Businessmap: " + {"archived": "arquivados", "all": "todos"}[f.state])
     if f.status:
         parts.append("Estado: " + names(f.status, STATUS_LABELS.get))
+    if f.open:
+        parts.append("Só abertos")
     if f.columnId:
         parts.append("Coluna: " + names(f.columnId, enrich.column_name))
     if f.laneId:

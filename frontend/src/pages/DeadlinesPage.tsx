@@ -14,7 +14,7 @@ import { useActiveBoard } from "@/hooks/useActiveBoard";
 import { useCardFilters } from "@/hooks/useCardFilters";
 import { formatDate, formatDays } from "@/lib/format";
 
-const HIDDEN_FILTERS = ["state", "status", "createdFrom", "createdTo", "overdue", "dueSoon"];
+const HIDDEN_FILTERS = ["state", "status", "open", "createdFrom", "createdTo", "overdue", "dueSoon"];
 
 function DeadlineTable({ title, list, empty }: { title: string; list: DeadlineList; empty: string }) {
   return (

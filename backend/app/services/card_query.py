@@ -36,6 +36,7 @@ class CardFilters:
     q: str | None = None
     state: StateFilter = "active"
     status: list[str] = field(default_factory=list)
+    open: bool = False
     column_id: list[int] = field(default_factory=list)
     lane_id: list[int] = field(default_factory=list)
     owner_user_id: list[int] = field(default_factory=list)
@@ -76,6 +77,8 @@ def build_query(board_id: int, f: CardFilters, tz: ZoneInfo, now: datetime | Non
         query["missingSince"] = None
     if f.status:
         query["status"] = {"$in": f.status}
+    if f.open:
+        and_.append({"status": {"$nin": CLOSED_STATUSES}})
     if f.column_id:
         query["columnId"] = {"$in": f.column_id}
     if f.lane_id:

@@ -28,4 +28,5 @@ status: active
 | D2 | Throughput e prazos | done | 2026-10-21 | developer | medium | 2026-10-21 |  | D1 |  |
 | D3 | Página Developers (uso pessoal do tech lead) | done | 2026-10-21 | developer | low | 2026-10-21 |  | D1 |  |
 | D4 | Período de pesquisa por omissão: último mês (hoje menos 1 mês) | done | 2026-10-22 |  | medium | 2026-10-22 |  |  |  |
+| D5 | KPI "Cartões ativos" conta só cartões abertos (exclui Done) | done | 2026-10-22 |  | medium | 2026-10-22 |  |  |  |
 <!-- /maestru:work-items-list -->

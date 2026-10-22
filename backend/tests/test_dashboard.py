@@ -10,7 +10,7 @@ PERIOD = {"from": "2026-08-01", "to": "2026-10-31", "granularity": "month"}
 def test_dashboard_kpis_distributions_and_timeline(synced):
     body = synced.get(URL, params=PERIOD).json()
     k = body["kpis"]
-    assert (k["total"], k["backlog"], k["todo"], k["inProgress"], k["active"], k["done"]) == (6, 1, 1, 2, 3, 2)
+    assert (k["total"], k["open"], k["backlog"], k["todo"], k["inProgress"], k["active"], k["done"]) == (6, 4, 1, 1, 2, 3, 2)
     assert (k["blocked"], k["unassigned"], k["overdue"]) == (1, 1, 1)
     assert (k["createdInPeriod"], k["completedInPeriod"]) == (7, 3)
     assert [(t["label"], t["created"], t["completed"]) for t in body["timeline"]] == [

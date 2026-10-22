@@ -26,7 +26,7 @@ beforeEach(() => {
         generatedAt: "2026-10-21T10:05:00Z",
         stale,
         period: { from: "2026-08-01", to: "2026-10-31", granularity: url.searchParams.get("granularity") ?? "week" },
-        kpis: { total: 6, backlog: 1, todo: 1, inProgress: 2, active: 3, done: 2, blocked: 1, overdue: 1, dueSoon: 0, unassigned: 1, createdInPeriod: 7, completedInPeriod: 3 },
+        kpis: { total: 6, open: 4, backlog: 1, todo: 1, inProgress: 2, active: 3, done: 2, blocked: 1, overdue: 1, dueSoon: 0, unassigned: 1, createdInPeriod: 7, completedInPeriod: 3 },
         distributions: {
           status: dist([["Backlog", 1], ["Em curso", 2]]),
           column: dist([["Em análise", 2]]),
@@ -46,6 +46,7 @@ it("mostra KPIs com ligação à lista de cartões e gráficos com tabela acess�
   renderWithProviders(<App />, { route: "/?ownerUserId=11" });
   const overdue = await screen.findByRole("link", { name: "Em atraso: 1" });
   expect(overdue).toHaveAttribute("href", "/cards?ownerUserId=11&overdue=true");
+  expect(screen.getByRole("link", { name: "Cartões ativos: 4" })).toHaveAttribute("href", "/cards?ownerUserId=11&open=true");
   expect(screen.getByRole("link", { name: "Concluídos no período: 3" })).toHaveAttribute(
     "href",
     "/cards?ownerUserId=11&state=all&endedFrom=2026-08-01&endedTo=2026-10-31",

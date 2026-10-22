@@ -17,7 +17,7 @@ import { useCardFilters } from "@/hooks/useCardFilters";
 import { formatDate } from "@/lib/format";
 
 const EXTRA_KEYS = [...PERIOD_KEYS];
-const HIDDEN_FILTERS = ["state", "status", "createdFrom", "createdTo", "overdue", "dueSoon"];
+const HIDDEN_FILTERS = ["state", "status", "open", "createdFrom", "createdTo", "overdue", "dueSoon"];
 
 export function ThroughputPage() {
   const [boardId] = useActiveBoard();

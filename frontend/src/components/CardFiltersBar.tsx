@@ -118,6 +118,12 @@ export function CardFiltersBar({ boardId, query, setFilter, setFilters, clear, h
         </div>
       )}
       <div className="flex items-center gap-3 pb-2 text-sm">
+        {shown("open") && (
+          <label className="flex items-center gap-1">
+            <input type="checkbox" checked={query.open === "true"} onChange={(e) => setFilter("open", e.target.checked ? "true" : null)} />
+            Só abertos
+          </label>
+        )}
         {shown("blocked") && (
           <label className="flex items-center gap-1">
             <input type="checkbox" checked={query.blocked === "true"} onChange={(e) => setFilter("blocked", e.target.checked ? "true" : null)} />

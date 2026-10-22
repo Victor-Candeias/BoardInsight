@@ -22,6 +22,7 @@ def test_lists_active_cards_enriched(synced):
 def test_filters(synced):
     assert ids(synced.get(URL, params={"status": "done", "sort": "cardId"})) == [5005, 5006]
     assert ids(synced.get(URL, params=[("status", "todo"), ("status", "backlog"), ("sort", "cardId")])) == [5001, 5002]
+    assert ids(synced.get(URL, params={"open": "true", "sort": "cardId"})) == [5001, 5002, 5003, 5004]
     assert ids(synced.get(URL, params={"blocked": "true"})) == [5003]
     assert ids(synced.get(URL, params={"unassigned": "true"})) == [5001]
     assert ids(synced.get(URL, params=[("ownerUserId", 11), ("unassigned", "true"), ("sort", "cardId")])) == [5001, 5002, 5004]

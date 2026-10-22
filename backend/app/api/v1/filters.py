@@ -13,6 +13,7 @@ def card_filters(
     q: Annotated[str | None, Query(max_length=200, description="Pesquisa em título, ID e ID personalizado")] = None,
     state: StateFilter = "active",
     status: Annotated[list[str], Query()] = [],  # noqa: B006 - FastAPI copia o default
+    open: Annotated[bool, Query(description="Só cartões abertos (exclui concluídos, arquivados e descartados)")] = False,
     column_id: Annotated[list[int], Query(alias="columnId")] = [],  # noqa: B006
     lane_id: Annotated[list[int], Query(alias="laneId")] = [],  # noqa: B006
     owner_user_id: Annotated[list[int], Query(alias="ownerUserId")] = [],  # noqa: B006
@@ -39,6 +40,7 @@ def card_filters(
         q=q,
         state=state,
         status=status,
+        open=open,
         column_id=column_id,
         lane_id=lane_id,
         owner_user_id=owner_user_id,

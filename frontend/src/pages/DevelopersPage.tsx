@@ -16,7 +16,7 @@ import { useCardFilters } from "@/hooks/useCardFilters";
 import { formatDays, formatNumber } from "@/lib/format";
 
 const EXTRA_KEYS = [...PERIOD_KEYS];
-const HIDDEN_FILTERS = ["state", "status", "ownerUserId", "createdFrom", "createdTo", "overdue", "dueSoon"];
+const HIDDEN_FILTERS = ["state", "status", "open", "ownerUserId", "createdFrom", "createdTo", "overdue", "dueSoon"];
 
 const ownerParam = (d: DeveloperRow) => (d.userId === null ? "unassigned=true" : `ownerUserId=${d.userId}`);
 

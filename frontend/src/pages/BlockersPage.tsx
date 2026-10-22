@@ -18,7 +18,7 @@ import { useCardFilters } from "@/hooks/useCardFilters";
 import { formatDateTime, formatDays, formatDuration, formatNumber } from "@/lib/format";
 
 const EXTRA_KEYS = [...PERIOD_KEYS];
-const HIDDEN_FILTERS = ["state", "status", "blocked", "createdFrom", "createdTo", "overdue", "dueSoon"];
+const HIDDEN_FILTERS = ["state", "status", "open", "blocked", "createdFrom", "createdTo", "overdue", "dueSoon"];
 
 const percent = (v: number | null) => (v === null ? "—" : `${formatNumber(v * 100, 0)}%`);
 

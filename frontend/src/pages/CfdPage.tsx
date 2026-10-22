@@ -15,7 +15,7 @@ import { formatDateTime } from "@/lib/format";
 
 const EXTRA_KEYS = ["from", "to", "group"];
 // Os snapshots só guardam ids por estado/coluna: filtra-se pelos atributos estáveis dos cartões.
-const HIDDEN_FILTERS = ["state", "status", "columnId", "laneId", "blocked", "createdFrom", "createdTo", "overdue", "dueSoon"];
+const HIDDEN_FILTERS = ["state", "status", "open", "columnId", "laneId", "blocked", "createdFrom", "createdTo", "overdue", "dueSoon"];
 
 export function CfdPage() {
   const [boardId] = useActiveBoard();

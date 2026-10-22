@@ -57,6 +57,7 @@ def build_dashboard(
     soon = now + timedelta(days=DUE_SOON_DAYS)
     kpis = {
         "total": len(current),
+        "open": count(open_),
         "backlog": count(lambda c: c.get("status") == "backlog"),
         "todo": count(lambda c: c.get("status") == "todo"),
         "inProgress": count(lambda c: c.get("status") == "in_progress"),

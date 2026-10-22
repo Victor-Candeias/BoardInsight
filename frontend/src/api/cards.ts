@@ -97,6 +97,7 @@ export const CARD_FILTER_KEYS = [
   "q",
   "state",
   "status",
+  "open",
   "columnId",
   "laneId",
   "ownerUserId",

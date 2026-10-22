@@ -7,7 +7,7 @@ created: 2026-10-21
 description: "Componentes, processos, collections MongoDB e fluxo de dados do BoardInsight."
 owner: developer
 tags: [architecture, backend, frontend]
-updated: 2026-10-21
+updated: 2026-10-22
 ---
 
 # architecture: Arquitetura do BoardInsight
@@ -119,7 +119,7 @@ Todas as respostas de erro usam `{"error": {"code", "message", "details"?}}` (`a
 
 - Os filtros de cartões (`api/v1/filters.py`, `services/card_query.py`) são partilhados pela lista de cartões, dashboard e exportações; na UI vivem nos parâmetros do URL (`useCardFilters`).
 - Períodos (`services/periods.py`): `from`/`to` (datas locais `Europe/Lisbon`, inclusivas), `granularity` = `day|week|month` (semanas ISO, segunda-feira). Por omissão: último mês (do mesmo dia do mês anterior até hoje; limitado ao fim do mês, ex. 31/03 → 28/02). Máximo de 400 intervalos (422 acima disso).
-- `GET /api/v1/boards/{id}/dashboard`: KPIs do estado atual (com filtros), distribuições (estado, coluna, lane, tipo, prioridade, responsável) e evolução criados vs. concluídos por intervalo. A evolução inclui arquivados e ignora os filtros de estado/datas; devolve `dataAsOf` e `stale`.
+- `GET /api/v1/boards/{id}/dashboard`: KPIs do estado atual (com filtros; `total` = não arquivados, `open` = abertos, sem concluídos/arquivados/descartados — é o valor de **Cartões ativos** na UI, que liga a `/cards?open=true`), distribuições (estado, coluna, lane, tipo, prioridade, responsável) e evolução criados vs. concluídos por intervalo. A evolução inclui arquivados e ignora os filtros de estado/datas; devolve `dataAsOf` e `stale`.
 - `GET /api/v1/boards/{id}/throughput` (filtros + período): cartões com `endTime` no período por intervalo (inclui arquivados, exclui descartados), tamanho somado, média por intervalo (exclui intervalos `partial` cortados pelo período) e totais por tipo. O mesmo critério de conclusão (`services/delivery.completed_query`) é usado no dashboard.
 - `GET /api/v1/boards/{id}/deadlines` (filtros): listas de cartões abertos em atraso e a vencer em 7 dias (ordenadas por prazo, máx. 500 com `truncated`, `daysToDeadline`), abertos sem prazo e atrasos por responsável.
 - `GET /api/v1/boards/{id}/developers` (filtros exceto responsável/estado/prazos + período): por responsável (inclui "Sem responsável") backlog, a fazer, WIP, bloqueados, em atraso, cartões abertos como co-responsável, idade média/máx. do WIP (`aging_days`; estimada sem data de início), concluídos e série por intervalo. Inclui `disclaimer`: uso pessoal do tech lead, não é avaliação de desempenho.
@@ -128,4 +128,5 @@ Todas as respostas de erro usam `{"error": {"code", "message", "details"?}}` (`a
 - `GET /api/v1/boards/{id}/blockers` (filtros exceto estado/bloqueio/prazos + período): `current` (cartões ativos em aberto bloqueados com motivo, comentário e `currentBlockTimeSeconds`; percentagem do trabalho em aberto; distribuições por motivo/responsável/coluna com dias acumulados) e `history` (bloqueios/desbloqueios observados nas syncs por intervalo e duração dos desbloqueados, `historySince`).
 - `GET /api/v1/boards/{id}/quality` (mesmos filtros + período): reaberturas `done` → backlog/todo/in_progress observadas na sync ou nas transições da API (por cartão conta a fonte com mais ocorrências), cartões reabertos, taxa = cartões reabertos ÷ concluídos no período, série por intervalo.
 - Sprints (`boards.sprints = {cadence: {start, lengthDays, namePrefix} | null, explicit: [{name, start, end}]}`; a lista explícita prevalece; sem sobreposições): `PUT /api/v1/boards/{id}/sprints/config`; `GET /api/v1/boards/{id}/sprints` (sprints até hoje, máx. 26 na cadência, com velocity, compromisso e cumprimento; `averageVelocity` das últimas 3 terminadas; `upcoming`); `GET /api/v1/boards/{id}/sprints/{sprintId}` (id = data de início; burndown diário, compromisso, adicionados depois). Filtros de texto/responsável/tipo/prioridade.
+- Filtro `open=true` (`/cards`, exportações e relatórios; checkbox **Só abertos**): exclui estados `done`, `archived` e `discarded`.
 - Exportação: `GET /api/v1/boards/{id}/cards/export?format=csv|json` com os mesmos filtros e `sort` de `/cards`, sem paginação; resposta em streaming com `Content-Disposition` e `X-Total-Count`; acima de `EXPORT_MAX_ROWS` devolve 422 `export_too_large`. CSV para Excel PT: separador `;`, vírgula decimal, BOM UTF-8, datas locais `AAAA-MM-DD HH:MM`, prefixo `'` contra injeção de fórmulas. JSON: `{meta, items}`.
