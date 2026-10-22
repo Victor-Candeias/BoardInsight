@@ -31,7 +31,7 @@ status: active
 | F4 | Relatórios agendados por sprint | done | 2026-10-21 | developer | low | 2026-10-22 |  | F2, track-c/C4, track-a/A5 |  |
 | H2 | Exportar página Atenção para PDF | done | 2026-10-22 |  | medium | 2026-10-22 |  |  |  |
 | H3 | Exportar página Dashboard para PDF | done | 2026-10-22 |  | medium | 2026-10-22 |  |  |  |
-| H4 | Exportar página Throughput para PDF | backlog | 2026-10-22 |  | medium |  |  |  |  |
+| H4 | Exportar página Throughput para PDF | done | 2026-10-22 |  | medium | 2026-10-22 |  |  |  |
 | H5 | Exportar página Fluxo para PDF | backlog | 2026-10-22 |  | medium |  |  |  |  |
 | H6 | Exportar página Bloqueios e qualidade para PDF | backlog | 2026-10-22 |  | medium |  |  |  |  |
 | H7 | Exportar página Prazos para PDF | backlog | 2026-10-22 |  | medium |  |  |  |  |

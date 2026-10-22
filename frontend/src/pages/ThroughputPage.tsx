@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { PERIOD_KEYS } from "@/api/dashboard";
 import { getThroughput } from "@/api/delivery";
@@ -6,6 +6,7 @@ import { DistributionChart } from "@/charts/DistributionChart";
 import { ThroughputChart } from "@/charts/ThroughputChart";
 import { CardFiltersBar } from "@/components/CardFiltersBar";
 import { DataAsOf } from "@/components/DataAsOf";
+import { ExportPdfButton } from "@/components/ExportPdfButton";
 import { KpiCard } from "@/components/KpiCard";
 import { NoBoard } from "@/components/NoBoard";
 import { PeriodControls } from "@/components/PeriodControls";
@@ -23,6 +24,7 @@ export function ThroughputPage() {
   const [boardId] = useActiveBoard();
   const { query, setFilter, setFilters, clear } = useCardFilters(EXTRA_KEYS);
   const [measure, setMeasure] = useState<"count" | "size">("count");
+  const pageRef = useRef<HTMLDivElement>(null);
 
   const throughput = useQuery({
     queryKey: ["throughput", boardId, query],
@@ -36,10 +38,13 @@ export function ThroughputPage() {
   const unit = { day: "dia", week: "semana", month: "mês" }[t?.period.granularity ?? "week"];
 
   return (
-    <div className="space-y-4">
+    <div ref={pageRef} className="space-y-4">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h1 className="text-2xl font-semibold">Throughput</h1>
-        {t && <DataAsOf dataAsOf={t.dataAsOf} stale={t.stale} />}
+        <div className="flex flex-wrap items-center gap-3">
+          {t && <DataAsOf dataAsOf={t.dataAsOf} stale={t.stale} />}
+          <ExportPdfButton target={pageRef} page="throughput" disabled={!t} />
+        </div>
       </div>
       <Card>
         <CardContent className="space-y-3 pt-6">

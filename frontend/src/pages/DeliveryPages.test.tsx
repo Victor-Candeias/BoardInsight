@@ -2,7 +2,13 @@ import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import App from "@/App";
 import { setActiveBoardId } from "@/hooks/useActiveBoard";
+import { expectPageExportedToPdf } from "@/test/pdf";
 import { mockFetch, renderWithProviders } from "@/test/utils";
+
+vi.mock("@/lib/exportPdf", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/exportPdf")>()),
+  exportElementToPdf: vi.fn(async () => {}),
+}));
 
 let requests: URL[];
 const card = (id: number, days: number, extra = {}) => ({
@@ -71,6 +77,12 @@ it("mostra throughput por intervalo, média e intervalos parciais", async () => 
   expect(requests[0].searchParams.get("ownerUserId")).toBe("11");
   fireEvent.change(screen.getByLabelText("Agrupar por"), { target: { value: "day" } });
   await waitFor(() => expect(requests[requests.length - 1].searchParams.get("granularity")).toBe("day"));
+});
+
+it("exporta a página Throughput para PDF tal como aparece", async () => {
+  renderWithProviders(<App />, { route: "/throughput" });
+  await screen.findByText("Média por semana");
+  await expectPageExportedToPdf("Throughput", "throughput");
 });
 
 it("lista cartões em atraso e a vencer com dias até ao prazo", async () => {
