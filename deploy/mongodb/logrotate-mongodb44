@@ -1,0 +1,15 @@
+# Instalar em /etc/logrotate.d/mongodb44
+/var/log/mongodb44/mongod.log {
+    weekly
+    rotate 4
+    maxsize 20M
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 600 mongodb44 mongodb44
+    sharedscripts
+    postrotate
+        systemctl kill --signal=SIGUSR1 --kill-whom=main mongodb44.service 2>/dev/null || true
+    endscript
+}

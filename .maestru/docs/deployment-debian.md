@@ -41,7 +41,7 @@ Logs: **journald** (sem ficheiros próprios). Limites em `/etc/systemd/journald.
 
 Todas correm como `boardinsight` com `ProtectSystem=strict`, `ProtectHome`, `PrivateTmp`, `NoNewPrivileges` e
 escrita apenas em `/var/lib/boardinsight`. Lêem a configuração de `BOARDINSIGHT_ENV_FILE=/opt/boardinsight/.env`.
-Se a unit do MongoDB não se chamar `mongod.service`, ajustar `After=` nas três units de serviço.
+Arrancam depois de `mongodb44.service` (unit existente do MongoDB 4.4 em `/opt/mongodb44/`, config `/etc/mongodb44.conf`).
 
 Nginx (`deploy/nginx.conf` → `/etc/nginx/sites-available/boardinsight`): serve `frontend/dist` com fallback SPA para
 `index.html`, cache longa em `/assets/`, e encaminha `/api/`, `/health` e `/ready` para `127.0.0.1:8000`.
@@ -55,7 +55,7 @@ node --version           # ≥ 20.19 (Vite 8); o nodejs do Debian 13 serve
 /opt/mongodb44/bin/mongod --version
 ```
 
-Base de dados e utilizador MongoDB com `readWrite` só na base `BoardInsight` (hardening em G2).
+Base de dados e utilizador MongoDB com `readWrite` só na base `BoardInsight` (ver Hardening do MongoDB).
 
 ## Instalação e atualização
 
@@ -81,6 +81,31 @@ sudo systemctl restart businessmap-api businessmap-worker
 
 O build do frontend no Atom é lento: fechar outros processos pesados durante o build. Se o site `default` do Nginx
 estiver ativo, removê-lo (`sudo rm /etc/nginx/sites-enabled/default && sudo systemctl reload nginx`).
+
+## Hardening do MongoDB e firewall
+
+Sem backups nem restauro (decisão): os dados são recolhidos de novo da API Businessmap.
+
+| Medida | Onde |
+|---|---|
+| Autenticação (`security.authorization: enabled`) | `deploy/mongodb/mongodb44.conf` → `/etc/mongodb44.conf` |
+| Só loopback (`net.bindIp: 127.0.0.1`) | idem |
+| Cache WiredTiger 0,25 GB, `javascriptEnabled: false` | idem |
+| Rotação do `mongod.log` (semanal, 20 MB, 4 cópias; `logRotate: reopen` + SIGUSR1) | `deploy/mongodb/logrotate-mongodb44` |
+| Utilizador da app só com `readWrite` em `BoardInsight` | `deploy/mongodb/create-app-user.js` (password pedida no terminal) |
+| UFW: entradas negadas por omissão; SSH e HTTP 80 só da LAN; 27017 e 8000 negadas | `deploy/mongodb/harden.sh` |
+
+```bash
+sudo deploy/mongodb/harden.sh                 # LAN detetada pela rota (ex.: 192.168.1.0/24)
+sudo deploy/mongodb/harden.sh --lan 192.168.1.0/24 --no-firewall
+cd /opt/boardinsight/backend && sudo -u boardinsight BOARDINSIGHT_ENV_FILE=/opt/boardinsight/.env \
+  .venv/bin/python -m app.ops.check_mongodb  # só leitura; sai com 1 se houver FALHA
+```
+
+O `harden.sh` guarda a config anterior em `/etc/mongodb44.conf.bak.<data>`, só reinicia o MongoDB se a config mudou
+e só acrescenta regras UFW (não faz reset). Atenção: com `default deny incoming`, outros serviços da máquina expostos na
+LAN (ex.: portas 5173/5175) precisam de regra própria. O `check_mongodb` verifica sockets em LISTEN, a config,
+que uma ligação sem credenciais é recusada e que o utilizador da app não tem roles fora de `read`/`readWrite` na base.
 
 ## Verificação
 

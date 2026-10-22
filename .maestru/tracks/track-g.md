@@ -26,7 +26,7 @@ status: active
 | ID | Title | Status | Created | Owner | Priority | Completed | Template | Blocked By | Spec |
 |---|---|---|---|---|---|---|---|---|---|
 | G1 | Deploy Debian: systemd, Nginx, utilizador dedicado, docs/deployment-debian.md | done | 2026-10-21 | developer | high | 2026-10-22 |  | track-b/B1, track-b/B2 |  |
-| G2 | Hardening MongoDB (auth, bind loopback, firewall LAN); sem backups | backlog | 2026-10-21 | developer | high |  |  | G1 |  |
+| G2 | Hardening MongoDB (auth, bind loopback, firewall LAN); sem backups | done | 2026-10-21 | developer | high | 2026-10-22 |  | G1 |  |
 | G3 | Rate limit em sync/export e CORS restrito | backlog | 2026-10-21 | developer | medium |  |  | track-c/C4, track-f/F1 |  |
 | G4 | Testes de aceitação operacionais (reboot, logs sem credenciais) | backlog | 2026-10-21 | developer | medium |  |  | G1 |  |
 <!-- /maestru:work-items-list -->
