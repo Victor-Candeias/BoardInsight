@@ -5,6 +5,7 @@ from fastapi import APIRouter, Response, status
 from app.api.deps import DB, AppSettings
 from app.api.errors import ApiError
 from app.api.v1.common import board_or_404, is_stale
+from app.api.rate_limit import rate_limit
 from app.repositories.jobs import JobRepository
 from app.repositories.locks import LockRepository
 from app.services.sync import lock_name
@@ -28,7 +29,7 @@ def sync_status(db: DB, settings: AppSettings, board: dict[str, Any]) -> dict[st
     }
 
 
-@router.post("/boards/{board_id}/sync", status_code=status.HTTP_202_ACCEPTED)
+@router.post("/boards/{board_id}/sync", status_code=status.HTTP_202_ACCEPTED, dependencies=[rate_limit("sync")])
 def enqueue_sync(board_id: int, db: DB, settings: AppSettings, response: Response) -> dict[str, Any]:
     board_or_404(db, board_id)
     settings.require_api_key()

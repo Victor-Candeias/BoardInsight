@@ -30,7 +30,13 @@ def db():
 
 @pytest.fixture
 def settings(settings_factory, tmp_path):
-    return settings_factory(businessmap_api_key="test-key", export_dir=tmp_path / "exports")
+    # Rate limit desligado por omissão nos testes; test_security.py ativa-o.
+    return settings_factory(
+        businessmap_api_key="test-key",
+        export_dir=tmp_path / "exports",
+        rate_limit_sync_per_minute=0,
+        rate_limit_export_per_minute=0,
+    )
 
 
 @pytest.fixture

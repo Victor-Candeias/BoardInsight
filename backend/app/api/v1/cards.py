@@ -7,6 +7,7 @@ from app.api.deps import DB, AppSettings
 from app.api.errors import ApiError
 from app.api.v1.common import board_or_404
 from app.api.v1.filters import Filters
+from app.api.rate_limit import rate_limit
 from app.models.cards import PRIORITY_LABELS, STATUS_LABELS
 from app.repositories.base import utcnow
 from app.services.card_query import CardEnricher, build_query, sort_spec
@@ -69,7 +70,7 @@ def filter_options(board_id: int, db: DB) -> dict[str, Any]:
     }
 
 
-@router.get("/export")
+@router.get("/export", dependencies=[rate_limit("export")])
 def export_cards(
     board_id: int,
     db: DB,

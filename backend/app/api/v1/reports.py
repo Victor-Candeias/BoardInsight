@@ -7,6 +7,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from app.api.deps import DB, AppSettings
 from app.api.errors import ApiError
 from app.api.v1.common import board_or_404
+from app.api.rate_limit import rate_limit
 from app.repositories.base import utcnow
 from app.repositories.jobs import JobRepository
 from app.repositories.report_definitions import DuplicateName, ReportDefinitionRepository
@@ -75,7 +76,7 @@ def _enqueue(db: DB, settings: AppSettings, board_id: int, fmt: ReportFormat, pa
         raise ApiError(422, exc.code, exc.message) from None
 
 
-@router.post("/export", status_code=status.HTTP_202_ACCEPTED)
+@router.post("/export", status_code=status.HTTP_202_ACCEPTED, dependencies=[rate_limit("export")])
 def create_export(body: ExportRequest, db: DB, settings: AppSettings) -> dict[str, Any]:
     """Valida e enfileira a geração (job `report_export`); o ficheiro é descarregado depois."""
     board_or_404(db, body.boardId)
@@ -175,7 +176,7 @@ def delete_definition(definition_id: str, db: DB) -> Response:
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-@router.post("/{definition_id}/export", status_code=status.HTTP_202_ACCEPTED)
+@router.post("/{definition_id}/export", status_code=status.HTTP_202_ACCEPTED, dependencies=[rate_limit("export")])
 def export_definition(definition_id: str, body: DefinitionExport, db: DB, settings: AppSettings) -> dict[str, Any]:
     """Gera o relatório de uma definição guardada (sem datas fixas, usa as últimas 12 semanas)."""
     definition = definition_or_404(db, definition_id)

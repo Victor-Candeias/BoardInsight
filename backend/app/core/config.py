@@ -88,8 +88,11 @@ class Settings(BaseSettings):
             if value.startswith("["):
                 import json
 
-                return json.loads(value)
-            return [o.strip() for o in value.split(",") if o.strip()]
+                value = json.loads(value)
+            else:
+                value = [o.strip() for o in value.split(",") if o.strip()]
+        if isinstance(value, list) and any(str(o).strip() in {"*", "null"} for o in value):
+            raise ValueError("CORS_ORIGINS tem de listar origens explícitas (sem '*' nem 'null')")
         return value
 
     @field_validator("app_timezone")
