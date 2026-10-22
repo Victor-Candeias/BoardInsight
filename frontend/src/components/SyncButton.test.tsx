@@ -70,3 +70,23 @@ it("mostra o erro quando o job falha", async () => {
   expect(await screen.findByRole("alert")).toHaveTextContent("Businessmap indisponível");
   await act(async () => {});
 });
+
+it("retoma um job em curso e não volta a segui-lo depois de terminar", async () => {
+  let statusCalls = 0;
+  vi.mocked(fetch).mockImplementation(((url: string) => {
+    if (url.endsWith("/sync-status")) {
+      statusCalls += 1;
+      if (statusCalls === 1) return json({ ...status, lastSuccessfulSyncAt: null, latestJob: job("running") });
+      // Com latência, o sync-status em cache ainda mostra o job ativo depois de ele terminar.
+      return new Promise<Response>((r) => setTimeout(() => r(json({ ...status, latestJob: job("done") })), 50));
+    }
+    if (url.includes("/jobs/")) return json(job("done"));
+    return json({}, 404);
+  }) as typeof fetch);
+  renderButton();
+  expect(await screen.findByText(/Atualizado: 21\/10\/2026, 11:00/, {}, { timeout: 5000 })).toBeInTheDocument();
+  await new Promise((r) => setTimeout(r, 300));
+  const calls = vi.mocked(fetch).mock.calls.map((c) => String(c[0]));
+  expect(calls.filter((u) => u.includes("/jobs/j1")).length).toBeLessThanOrEqual(2);
+  expect(screen.getByRole("button", { name: "Atualizar" })).toBeEnabled();
+});

@@ -340,11 +340,21 @@ begin
       Warn('Não foi possível criar a regra de firewall "' + FirewallRule + '".');
 end;
 
+procedure RemoveEmptyDirAt(const Path: String);
+begin
+  { Pasta vazia no lugar de um ficheiro (ex.: "mkdir" manual) impede a configuração; RemoveDir só apaga pastas vazias. }
+  if DirExists(Path) and RemoveDir(Path) then
+    Log('pasta vazia removida: ' + Path);
+end;
+
 procedure PostInstall;
 var
   Code: Integer;
   Params: String;
 begin
+  RemoveEmptyDirAt(EnvFile);
+  RemoveEmptyDirAt(DataDir + '\logs\sync.log');
+
   SetStatus('A proteger a pasta de dados...');
   RunQuiet(ExpandConstant('{sys}\icacls.exe'), '"' + DataDir + '" /inheritance:r /grant:r *S-1-5-18:(OI)(CI)F *S-1-5-32-544:(OI)(CI)F /Q');
 
@@ -378,6 +388,8 @@ begin
   if Code = 2 then
     Warn('O board ' + BoardId + ' não foi registado (ver ' + DataDir + '\logs\setup.log). ' +
       'Pode adicioná-lo depois na página Boards do BoardInsight.')
+  else if Code = 3 then
+    Warn('Falhou a preparação da configuração em ' + DataDir + ' (código 3). Ver ' + DataDir + '\logs\setup.log.')
   else if Code <> 0 then
     Warn('Falhou a configuração do MongoDB (código ' + IntToStr(Code) + '). Ver ' + DataDir + '\logs\setup.log.');
 

@@ -76,6 +76,10 @@ BoardInsight-Setup-0.1.0.exe /VERYSILENT /SUPPRESSMSGBOXES /URL=https://cttv8.ka
 Juntar `/TASKS=""` para não criar a regra de firewall. Os códigos de saída e os avisos ficam no log do Inno
 (`%TEMP%\Setup Log *.txt`) e em `%ProgramData%\BoardInsight\logs\setup.log`.
 
+Códigos do `windows_setup`: 1 = falha no MongoDB; 2 = board inicial não registado (não fatal); 3 = falha a preparar o
+`.env` ou o segredo do admin (por exemplo, uma pasta com conteúdo no lugar de `.env`). O instalador remove pastas
+vazias que ocupem o lugar de `.env` ou de `logs\sync.log`.
+
 ## Atualização e desinstalação
 
 - **Atualizar.** Correr o `.exe` da nova versão. Os campos vêm pré-preenchidos a partir do `.env` existente; deixar a API

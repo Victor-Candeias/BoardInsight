@@ -7,7 +7,7 @@
 #   --skip-frontend  reutiliza frontend/dist existente (não corre npm run build)
 #
 # Passos:
-#  1. Frontend: npm ci (só se faltar node_modules) e npm run build.
+#  1. Frontend: npm ci (se node_modules faltar, estiver incompleto ou desatualizado) e npm run build.
 #  2. Python 3.13 embeddable para Windows + dependências win_amd64 (pip --platform) + backend/app, pré-compilado.
 #  3. MongoDB (só mongod.exe e vc_redist.x64.exe do ZIP oficial) e WinSW.
 #  4. Inno Setup sob Wine (driver gráfico "null", sem display) -> dist/windows/BoardInsight-Setup-<versão>.exe
@@ -69,7 +69,11 @@ mkdir -p "$APP" "$STAGE/winsw" "$STAGE/redist" "$OUT_DIR"
 # 1. Frontend
 if [[ $skip_frontend -eq 0 ]]; then
   log "frontend: build de produção"
-  ( cd "$ROOT/frontend" && { [[ -d node_modules ]] || npm ci --no-audit --no-fund; } && npm run build )
+  # npm ci se node_modules faltar, estiver incompleto (sem .package-lock.json) ou for anterior ao package-lock.json.
+  ( cd "$ROOT/frontend" \
+    && { [[ -f node_modules/.package-lock.json && ! package-lock.json -nt node_modules/.package-lock.json ]] \
+         || npm ci --no-audit --no-fund; } \
+    && npm run build )
 fi
 [[ -f "$ROOT/frontend/dist/index.html" ]] || die "frontend/dist em falta (correr sem --skip-frontend)"
 mkdir -p "$APP/frontend"

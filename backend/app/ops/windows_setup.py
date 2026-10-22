@@ -7,7 +7,8 @@
    primeira execução e o utilizador da aplicação (readWrite na base); nas seguintes autentica como admin.
 3. Cria os índices e regista o board inicial (metadados + job `sync_board`) se ainda não existir.
 
-Idempotente. Códigos de saída: 0 ok, 1 falha no MongoDB, 2 board inicial não registado (não fatal).
+Idempotente. Códigos de saída: 0 ok, 1 falha no MongoDB, 2 board inicial não registado (não fatal),
+3 falha a preparar o `.env`/segredo. Erros ficam sempre no `--log`.
 Uso: python -m app.ops.windows_setup --env FICH --template FICH --admin-secret FICH [--url URL]
      [--board ID] [--port N] [--frontend-dist DIR] [--log FICH]
 """
@@ -24,6 +25,7 @@ import time
 from pathlib import Path
 from typing import Any
 
+from pydantic import ValidationError
 from pymongo import MongoClient
 from pymongo.database import Database
 from pymongo.errors import OperationFailure, PyMongoError
@@ -42,7 +44,7 @@ logger = logging.getLogger("app.ops.windows_setup")
 
 API_KEY_ENV = "BOARDINSIGHT_SETUP_API_KEY"
 ADMIN_USER = "admin"
-EXIT_OK, EXIT_MONGO, EXIT_BOARD = 0, 1, 2
+EXIT_OK, EXIT_MONGO, EXIT_BOARD, EXIT_CONFIG = 0, 1, 2, 3
 
 
 class SetupError(RuntimeError):
@@ -85,6 +87,12 @@ def prepare_env(
     api_key: str | None = None,
     frontend_dist: Path | None = None,
 ) -> None:
+    if env_path.is_dir():
+        # Pasta no lugar do ficheiro (ex.: `mkdir` manual): remover se vazia; com conteúdo, não arriscar.
+        try:
+            env_path.rmdir()
+        except OSError as exc:
+            raise SetupError(f"{env_path} é uma pasta e não um ficheiro; remover a pasta e voltar a instalar") from exc
     if not env_path.exists():
         env_path.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(template, env_path)
@@ -186,27 +194,42 @@ async def register_board(db: Database, settings: Settings, board_id: int, client
     return True
 
 
-def _configure_logging(settings: Settings, log_path: Path | None) -> None:
+def _configure_logging(secrets: list[str], log_path: Path | None) -> None:
+    if log_path:
+        log_path.parent.mkdir(parents=True, exist_ok=True)
     handler: logging.Handler = logging.FileHandler(log_path, encoding="utf-8") if log_path else logging.StreamHandler(sys.stdout)
-    handler.setFormatter(JsonFormatter(Redactor(settings.secret_values())))
+    handler.setFormatter(JsonFormatter(Redactor(secrets)))
     root = logging.getLogger()
+    for old in root.handlers:
+        if isinstance(old, logging.FileHandler):
+            old.close()
     root.handlers[:] = [handler]
     root.setLevel(logging.INFO)
 
 
 def run(args: argparse.Namespace) -> int:
-    prepare_env(
-        args.env,
-        args.template,
-        url=args.url,
-        board=args.board,
-        port=args.port,
-        api_key=os.environ.get(API_KEY_ENV),
-        frontend_dist=args.frontend_dist,
-    )
-    admin_password = ensure_secret_file(args.admin_secret)
-    settings = Settings(_env_file=args.env)
-    _configure_logging(settings, args.log)
+    api_key = os.environ.get(API_KEY_ENV) or ""
+    _configure_logging([api_key], args.log)
+    try:
+        prepare_env(
+            args.env,
+            args.template,
+            url=args.url,
+            board=args.board,
+            port=args.port,
+            api_key=api_key,
+            frontend_dist=args.frontend_dist,
+        )
+        admin_password = ensure_secret_file(args.admin_secret)
+        settings = Settings(_env_file=args.env)
+    except (SetupError, OSError) as exc:
+        logger.error("falha a preparar a configuração: %s", exc)
+        return EXIT_CONFIG
+    except ValidationError as exc:
+        # Só os nomes dos campos: as mensagens do pydantic incluem os valores.
+        logger.error("configuração inválida em %s: %s", args.env, sorted(str(e["loc"][0]) for e in exc.errors() if e["loc"]))
+        return EXIT_CONFIG
+    _configure_logging(settings.secret_values(), args.log)
     logger.info("configuração Windows iniciada", extra={"env": str(args.env)})
     try:
         wait_for_mongo(settings, args.wait)

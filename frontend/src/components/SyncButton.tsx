@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -12,13 +12,16 @@ export function SyncButton({ boardId }: { boardId: number }) {
   const queryClient = useQueryClient();
   const [jobId, setJobId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // Jobs já terminados: o sync-status em cache pode ainda mostrá-los como ativos até ser refeito,
+  // e retomá-los criava um ciclo de invalidações (pedidos cancelados sem fim).
+  const finishedJobs = useRef(new Set<string>());
 
   const status = useQuery({ queryKey: syncStatusKey(boardId), queryFn: () => getSyncStatus(boardId), refetchInterval: 60_000 });
 
   // Retoma o acompanhamento de um job já em curso (ex.: após recarregar a página).
   useEffect(() => {
     const latest = status.data?.latestJob;
-    if (!jobId && isActiveJob(latest)) setJobId(latest!.id);
+    if (!jobId && latest && isActiveJob(latest) && !finishedJobs.current.has(latest.id)) setJobId(latest.id);
   }, [status.data, jobId]);
 
   const job = useQuery({
@@ -30,12 +33,13 @@ export function SyncButton({ boardId }: { boardId: number }) {
 
   useEffect(() => {
     const data = job.data;
-    if (!data || isActiveJob(data)) return;
+    if (!data || isActiveJob(data) || !jobId || finishedJobs.current.has(jobId)) return;
+    finishedJobs.current.add(jobId);
     setJobId(null);
     if (data.status === "error") setError(data.error?.message ?? "A sincronização falhou");
     // Dados novos: invalidar tudo o que depende do board.
     void queryClient.invalidateQueries();
-  }, [job.data, queryClient]);
+  }, [job.data, jobId, queryClient]);
 
   const mutation = useMutation({
     mutationFn: () => enqueueSync(boardId),
