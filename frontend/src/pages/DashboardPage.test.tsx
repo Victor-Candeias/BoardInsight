@@ -2,7 +2,13 @@ import { fireEvent, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import App from "@/App";
 import { setActiveBoardId } from "@/hooks/useActiveBoard";
+import { expectPageExportedToPdf } from "@/test/pdf";
 import { mockFetch, renderWithProviders } from "@/test/utils";
+
+vi.mock("@/lib/exportPdf", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/exportPdf")>()),
+  exportElementToPdf: vi.fn(async () => {}),
+}));
 
 let requests: URL[];
 let stale = false;
@@ -66,4 +72,10 @@ it("envia período e granularidade e avisa quando os dados estão desatualizados
   await waitFor(() => expect(requests[requests.length - 1].searchParams.get("granularity")).toBe("month"));
   fireEvent.change(screen.getByLabelText("De"), { target: { value: "2026-09-01" } });
   await waitFor(() => expect(requests[requests.length - 1].searchParams.get("from")).toBe("2026-09-01"));
+});
+
+it("exporta a página para PDF tal como aparece", async () => {
+  renderWithProviders(<App />, { route: "/dashboard" });
+  await screen.findByRole("link", { name: "Em atraso: 1" });
+  await expectPageExportedToPdf("Dashboard", "dashboard");
 });

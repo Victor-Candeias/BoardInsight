@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { CARD_FILTER_KEYS, type CardQuery } from "@/api/cards";
 import { getDashboard, PERIOD_KEYS } from "@/api/dashboard";
@@ -5,6 +6,7 @@ import { DistributionChart } from "@/charts/DistributionChart";
 import { TimelineChart } from "@/charts/TimelineChart";
 import { CardFiltersBar } from "@/components/CardFiltersBar";
 import { DataAsOf } from "@/components/DataAsOf";
+import { ExportPdfButton } from "@/components/ExportPdfButton";
 import { KpiCard } from "@/components/KpiCard";
 import { NoBoard } from "@/components/NoBoard";
 import { PeriodControls } from "@/components/PeriodControls";
@@ -35,6 +37,7 @@ function cardsLink(query: CardQuery, extra: Record<string, string | null>) {
 export function DashboardPage() {
   const [boardId] = useActiveBoard();
   const { query, setFilter, setFilters, clear } = useCardFilters(EXTRA_KEYS);
+  const pageRef = useRef<HTMLDivElement>(null);
 
   const dashboard = useQuery({
     queryKey: ["dashboard", boardId, query],
@@ -50,10 +53,13 @@ export function DashboardPage() {
   const periodHint = period ? `${formatDate(period.from)} – ${formatDate(period.to)}` : undefined;
 
   return (
-    <div className="space-y-4">
+    <div ref={pageRef} className="space-y-4">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h1 className="text-2xl font-semibold">Dashboard</h1>
-        {d && !d.stale && <DataAsOf dataAsOf={d.dataAsOf} stale={false} />}
+        <div className="flex flex-wrap items-center gap-3">
+          {d && !d.stale && <DataAsOf dataAsOf={d.dataAsOf} stale={false} />}
+          <ExportPdfButton target={pageRef} page="dashboard" disabled={!d} />
+        </div>
       </div>
       {d && (d.stale || !d.dataAsOf) && <DataAsOf dataAsOf={d.dataAsOf} stale={d.stale} />}
       <Card>
