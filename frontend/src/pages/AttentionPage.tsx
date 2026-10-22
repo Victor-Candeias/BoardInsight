@@ -55,7 +55,7 @@ function ReasonTile({ reason, value, hint, active, onToggle }: TileProps) {
       aria-pressed={active}
       aria-label={`${label}: ${value}`}
       className={cn(
-        "rounded-lg border bg-white p-4 text-left shadow-sm transition-colors hover:border-sky-300 focus-visible:outline-2 focus-visible:outline-sky-500",
+        "rounded-xl border bg-white p-4 text-left shadow-sm transition-colors hover:border-sky-300 focus-visible:outline-2 focus-visible:outline-sky-500",
         active ? "border-sky-500 ring-1 ring-sky-500" : "border-slate-200",
       )}
     >

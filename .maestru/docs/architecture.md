@@ -61,7 +61,7 @@ Nginx :80 ── /            -> frontend/dist (SPA React, PT-PT)
 
 React + TypeScript + Vite, Tailwind + componentes estilo shadcn/ui, TanStack Query/Table, Recharts.
 Páginas: Atenção (página inicial, `/`), Dashboard (`/dashboard`), Boards, Cartões, Developers, Fluxo, Bloqueios, Sprints, Relatórios.
-O board ativo é escolhido no cabeçalho (guardado no `localStorage`).
+O board ativo é escolhido no cabeçalho (guardado no `localStorage`). Menu lateral agrupado (`components/nav.ts`: Visão geral, Fluxo e entrega, Equipa, Dados) com o logótipo; recursos da marca em `frontend/public/brand/` (gerados a partir de `images/BoardInsight.png`) e cores `brand-*`/`accent-500` em `index.css`.
 
 ## Collections MongoDB
 
