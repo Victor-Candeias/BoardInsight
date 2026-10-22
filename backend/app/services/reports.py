@@ -426,6 +426,7 @@ def enqueue_export(
     *,
     definition_id: str | None = None,
     default_title: str = "Relatório geral",
+    extra: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Verifica o limite de linhas e cria `report_exports` + job `report_export`."""
     total = db.cards.count_documents(build_query(board_id, params.filters.to_card_filters(), settings.tz))
@@ -437,7 +438,16 @@ def enqueue_export(
     stored["title"] = title
     repo = ReportExportRepository(db)
     export = repo.create(
-        {"boardId": board_id, "format": fmt, "report": "general", "title": title, "definitionId": definition_id, "params": stored},
+        {
+            "boardId": board_id,
+            "format": fmt,
+            "report": "general",
+            "title": title,
+            "definitionId": definition_id,
+            "trigger": "manual",
+            "params": stored,
+            **(extra or {}),
+        },
         timedelta(days=settings.export_retention_days),
     )
     job, _ = JobRepository(db).enqueue("report_export", {"exportId": export["id"]}, dedupe=False)

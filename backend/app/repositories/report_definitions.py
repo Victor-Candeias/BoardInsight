@@ -32,35 +32,43 @@ class ReportDefinitionRepository(Repository):
 
     collection_name = "report_definitions"
 
-    def list(self, board_id: int) -> list[dict[str, Any]]:
+    def for_board(self, board_id: int) -> list[dict[str, Any]]:
         return [_public(d) for d in self.collection.find({"boardId": board_id}).sort("name", 1)]
 
     def get(self, definition_id: str) -> dict[str, Any] | None:
         oid = _oid(definition_id)
         return _public(self.collection.find_one({"_id": oid})) if oid else None
 
-    def create(self, board_id: int, name: str, params: dict[str, Any]) -> dict[str, Any]:
+    def create(self, board_id: int, name: str, params: dict[str, Any], schedule: dict[str, Any] | None = None) -> dict[str, Any]:
         now = utcnow()
-        doc = {"boardId": board_id, "name": name, "params": params, "createdAt": now, "updatedAt": now}
+        doc = {"boardId": board_id, "name": name, "params": params, "schedule": schedule, "createdAt": now, "updatedAt": now}
         try:
             doc["_id"] = self.collection.insert_one(doc).inserted_id
         except DuplicateKeyError:
             raise DuplicateName(name) from None
         return _public(doc)
 
-    def update(self, definition_id: str, name: str, params: dict[str, Any]) -> dict[str, Any] | None:
+    def update(
+        self, definition_id: str, name: str, params: dict[str, Any], schedule: dict[str, Any] | None = None
+    ) -> dict[str, Any] | None:
         oid = _oid(definition_id)
         if oid is None:
             return None
         try:
             doc = self.collection.find_one_and_update(
                 {"_id": oid},
-                {"$set": {"name": name, "params": params, "updatedAt": utcnow()}},
+                {"$set": {"name": name, "params": params, "schedule": schedule, "updatedAt": utcnow()}},
                 return_document=ReturnDocument.AFTER,
             )
         except DuplicateKeyError:
             raise DuplicateName(name) from None
         return _public(doc)
+
+    def scheduled(self) -> list[dict[str, Any]]:
+        return [_public(d) for d in self.collection.find({"schedule.enabled": True})]
+
+    def record_schedule_run(self, definition_id: str, fields: dict[str, Any]) -> None:
+        self.collection.update_one({"_id": ObjectId(definition_id)}, {"$set": {f"schedule.{k}": v for k, v in fields.items()}})
 
     def delete(self, definition_id: str) -> bool:
         oid = _oid(definition_id)

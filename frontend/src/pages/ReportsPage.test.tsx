@@ -27,6 +27,7 @@ const definition = {
   name: "Bloqueados da Ana",
   params: { title: "Bloqueios", filters: { ownerUserId: [11], blocked: false, overdue: false }, from: null, to: null, sort: "-priority" },
   filtersLabel: "Responsável: Ana; Não bloqueados",
+  schedule: null,
   createdAt: "2026-10-21T09:00:00Z",
   updatedAt: "2026-10-21T09:00:00Z",
 };
@@ -36,6 +37,7 @@ let definitions: unknown[];
 let posted: Record<string, unknown> | null;
 let savedDefinition: Record<string, unknown> | null;
 let definitionExport: string | null;
+let updatedDefinition: Record<string, unknown> | null;
 beforeEach(() => {
   localStorage.clear();
   setActiveBoardId(96);
@@ -44,6 +46,7 @@ beforeEach(() => {
   posted = null;
   savedDefinition = null;
   definitionExport = null;
+  updatedDefinition = null;
   mockFetch({
     "GET /api/v1/boards": () => [{ boardId: 96, name: "Board 96", stale: false }],
     "GET /api/v1/boards/96/sync-status": () => ({ boardId: 96, stale: false, lastSuccessfulSyncAt: null, latestJob: null }),
@@ -55,6 +58,12 @@ beforeEach(() => {
       const created = { ...definition, id: "d2", name: String(savedDefinition!.name), filtersLabel: "Sem filtros" };
       definitions = [...definitions, created];
       return [201, created];
+    },
+    "PUT /api/v1/reports/d1": (_url, init) => {
+      updatedDefinition = JSON.parse(String(init?.body));
+      const updated = { ...definition, schedule: { ...(updatedDefinition!.schedule as object), trigger: "sprint_end", since: "2026-10-21" } };
+      definitions = [updated];
+      return updated;
     },
     "POST /api/v1/reports/d1/export": (_url, init) => {
       definitionExport = JSON.parse(String(init?.body)).format;
@@ -108,4 +117,15 @@ it("guarda, aplica e gera relatórios a partir de definições", async () => {
   fireEvent.click(screen.getAllByRole("button", { name: "Aplicar" })[0]);
   await waitFor(() => expect(screen.getByLabelText("Título")).toHaveValue("Bloqueios"));
   expect(screen.getByLabelText("Responsável")).toHaveValue("11");
+});
+
+it("agenda uma definição para o fim de cada sprint", async () => {
+  renderWithProviders(<App />, { route: "/reports" });
+  const select = await screen.findByLabelText("Agendamento de Bloqueados da Ana");
+  expect(select).toHaveValue("off");
+  fireEvent.change(select, { target: { value: "both" } });
+  await waitFor(() => expect(updatedDefinition).not.toBeNull());
+  expect(updatedDefinition).toMatchObject({ name: "Bloqueados da Ana", schedule: { enabled: true, formats: ["pdf", "xlsx"] } });
+  await waitFor(() => expect(screen.getByLabelText("Agendamento de Bloqueados da Ana")).toHaveValue("both"));
+  expect(screen.getByText(/gerados pela sincronização periódica/)).toBeInTheDocument();
 });

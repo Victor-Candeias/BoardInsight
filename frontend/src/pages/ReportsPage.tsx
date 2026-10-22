@@ -10,6 +10,7 @@ import {
   listReportExports,
   queryFromReportParams,
   reportParamsFromQuery,
+  updateReportDefinition,
   type ReportDefinition,
   type ReportExport,
   type ReportFormat,
@@ -21,7 +22,7 @@ import { ErrorAlert, Loading } from "@/components/QueryState";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input, Label } from "@/components/ui/input";
+import { Input, Label, Select } from "@/components/ui/input";
 import { Table, TBody, TD, TH, THead, TR } from "@/components/ui/table";
 import { useActiveBoard } from "@/hooks/useActiveBoard";
 import { useCardFilters } from "@/hooks/useCardFilters";
@@ -29,6 +30,18 @@ import { formatDateTime, formatNumber } from "@/lib/format";
 
 const EXTRA_KEYS = ["from", "to", "sort"];
 const POLL_MS = 2000;
+
+const SCHEDULE_OPTIONS: Record<string, { label: string; formats: ReportFormat[] }> = {
+  pdf: { label: "PDF no fim de cada sprint", formats: ["pdf"] },
+  xlsx: { label: "XLSX no fim de cada sprint", formats: ["xlsx"] },
+  both: { label: "PDF e XLSX no fim de cada sprint", formats: ["pdf", "xlsx"] },
+};
+
+function scheduleValue(d: ReportDefinition): string {
+  if (!d.schedule?.enabled) return "off";
+  const f = [...d.schedule.formats].sort().join(",");
+  return f === "pdf,xlsx" ? "both" : f;
+}
 
 const STATUS: Record<ReportExport["status"], { label: string; variant: "default" | "info" | "success" | "danger" }> = {
   pending: { label: "Em fila", variant: "default" },
@@ -82,6 +95,15 @@ export function ReportsPage() {
     onSuccess: refreshExports,
   });
   const remove = useMutation({ mutationFn: deleteReportDefinition, onSuccess: refreshDefinitions });
+  const schedule = useMutation({
+    mutationFn: ({ d, value }: { d: ReportDefinition; value: string }) =>
+      updateReportDefinition(d.id, {
+        name: d.name,
+        params: d.params,
+        schedule: value === "off" ? { enabled: false, formats: d.schedule?.formats ?? ["pdf"] } : { enabled: true, formats: SCHEDULE_OPTIONS[value].formats },
+      }),
+    onSuccess: refreshDefinitions,
+  });
 
   const apply = (d: ReportDefinition) => {
     setFilters(queryFromReportParams(d.params));
@@ -136,7 +158,7 @@ export function ReportsPage() {
       </Card>
 
       <h2 className="text-lg font-semibold">Definições guardadas</h2>
-      <ErrorAlert error={definitions.error ?? generate.error ?? remove.error} />
+      <ErrorAlert error={definitions.error ?? generate.error ?? remove.error ?? schedule.error} />
       {definitions.data && definitions.data.length === 0 && (
         <p className="text-sm text-slate-500">Sem definições. Escolha os filtros acima e guarde-os com um nome para reutilizar.</p>
       )}
@@ -148,6 +170,7 @@ export function ReportsPage() {
                 <TH>Nome</TH>
                 <TH>Filtros</TH>
                 <TH>Período</TH>
+                <TH>Agendamento</TH>
                 <TH />
               </TR>
             </THead>
@@ -157,6 +180,23 @@ export function ReportsPage() {
                   <TD className="font-medium">{d.name}</TD>
                   <TD className="text-sm text-slate-600">{d.filtersLabel}</TD>
                   <TD className="text-sm">{d.params.from || d.params.to ? `${d.params.from ?? "…"} a ${d.params.to ?? "…"}` : "Últimas 12 semanas"}</TD>
+                  <TD>
+                    <Select
+                      aria-label={`Agendamento de ${d.name}`}
+                      className="w-60"
+                      value={scheduleValue(d)}
+                      disabled={schedule.isPending}
+                      onChange={(e) => schedule.mutate({ d, value: e.target.value })}
+                    >
+                      <option value="off">Sem agendamento</option>
+                      {Object.entries(SCHEDULE_OPTIONS).map(([value, o]) => (
+                        <option key={value} value={value}>
+                          {o.label}
+                        </option>
+                      ))}
+                    </Select>
+                    {d.schedule?.lastError && <p className="mt-1 text-xs text-red-700">Última execução: {d.schedule.lastError.message}</p>}
+                  </TD>
                   <TD>
                     <div className="flex flex-wrap justify-end gap-1">
                       <Button size="sm" variant="ghost" onClick={() => apply(d)}>
@@ -184,6 +224,12 @@ export function ReportsPage() {
             </TBody>
           </Table>
         </Card>
+      )}
+      {definitions.data?.some((d) => d.schedule?.enabled) && (
+        <p className="text-xs text-slate-500">
+          Os relatórios agendados são gerados pela sincronização periódica depois do fim de cada sprint (sprints configuradas na página
+          Sprints), com o período da sprint e apenas para sprints terminadas após a ativação.
+        </p>
       )}
 
       <h2 className="text-lg font-semibold">Exportações recentes</h2>

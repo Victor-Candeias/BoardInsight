@@ -12,6 +12,7 @@ from app.repositories.jobs import JobRepository
 from app.repositories.report_definitions import DuplicateName, ReportDefinitionRepository
 from app.repositories.report_exports import ReportExportRepository
 from app.services.card_query import CardEnricher
+from app.services.scheduled_reports import ScheduleConfig, normalize_schedule
 from app.services.reports import (
     MEDIA_TYPES,
     ReportError,
@@ -35,6 +36,7 @@ class DefinitionUpdate(BaseModel):
 
     name: str = Field(min_length=1, max_length=80)
     params: ReportParams = Field(default_factory=ReportParams)
+    schedule: ScheduleConfig | None = None
 
 
 class DefinitionCreate(DefinitionUpdate):
@@ -130,15 +132,16 @@ def _name_taken(name: str) -> ApiError:
 @router.get("")
 def list_definitions(db: DB, board_id: int = Query(alias="boardId")) -> list[dict[str, Any]]:
     board = board_or_404(db, board_id)
-    return _with_label(ReportDefinitionRepository(db).list(board_id), CardEnricher(db, board))
+    return _with_label(ReportDefinitionRepository(db).for_board(board_id), CardEnricher(db, board))
 
 
 @router.post("", status_code=status.HTTP_201_CREATED)
-def create_definition(body: DefinitionCreate, db: DB) -> dict[str, Any]:
+def create_definition(body: DefinitionCreate, db: DB, settings: AppSettings) -> dict[str, Any]:
     board = board_or_404(db, body.boardId)
     name = body.name.strip()
+    schedule = normalize_schedule(body.schedule, None, utcnow().astimezone(settings.tz).date())
     try:
-        created = ReportDefinitionRepository(db).create(body.boardId, name, body.params.model_dump(mode="json", by_alias=True))
+        created = ReportDefinitionRepository(db).create(body.boardId, name, body.params.model_dump(mode="json", by_alias=True), schedule)
     except DuplicateName:
         raise _name_taken(name) from None
     return _with_label([created], CardEnricher(db, board))[0]
@@ -151,11 +154,15 @@ def get_definition(definition_id: str, db: DB) -> dict[str, Any]:
 
 
 @router.put("/{definition_id}")
-def update_definition(definition_id: str, body: DefinitionUpdate, db: DB) -> dict[str, Any]:
+def update_definition(definition_id: str, body: DefinitionUpdate, db: DB, settings: AppSettings) -> dict[str, Any]:
+    """Substitui nome, parâmetros e agendamento (o estado de execução do agendamento mantém-se)."""
     definition = definition_or_404(db, definition_id)
     name = body.name.strip()
+    schedule = normalize_schedule(body.schedule, definition.get("schedule"), utcnow().astimezone(settings.tz).date())
     try:
-        updated = ReportDefinitionRepository(db).update(definition_id, name, body.params.model_dump(mode="json", by_alias=True))
+        updated = ReportDefinitionRepository(db).update(
+            definition_id, name, body.params.model_dump(mode="json", by_alias=True), schedule
+        )
     except DuplicateName:
         raise _name_taken(name) from None
     return _with_label([updated], CardEnricher(db, board_or_404(db, definition["boardId"])))[0]

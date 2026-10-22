@@ -47,11 +47,22 @@ export const createReportExport = (body: ReportParams & { boardId: number; forma
 export const listReportExports = (boardId: number) =>
   api<ReportExport[]>("/api/v1/reports/exports", { query: { boardId, limit: 20 } });
 
+export interface ReportSchedule {
+  enabled: boolean;
+  trigger: "sprint_end";
+  formats: ReportFormat[];
+  since?: string | null;
+  lastSprintId?: string | null;
+  lastRunAt?: string | null;
+  lastError?: { code: string; message: string } | null;
+}
+
 export interface ReportDefinition {
   id: string;
   boardId: number;
   name: string;
   params: ReportParams;
+  schedule: ReportSchedule | null;
   filtersLabel: string;
   createdAt: string;
   updatedAt: string;
@@ -75,6 +86,11 @@ export const listReportDefinitions = (boardId: number) => api<ReportDefinition[]
 
 export const createReportDefinition = (body: { boardId: number; name: string; params: ReportParams }) =>
   api<ReportDefinition>("/api/v1/reports", { method: "POST", body: JSON.stringify(body) });
+
+export const updateReportDefinition = (
+  id: string,
+  body: { name: string; params: ReportParams; schedule: Pick<ReportSchedule, "enabled" | "formats"> | null },
+) => api<ReportDefinition>(`/api/v1/reports/${id}`, { method: "PUT", body: JSON.stringify(body) });
 
 export const deleteReportDefinition = (id: string) => api<void>(`/api/v1/reports/${id}`, { method: "DELETE" });
 
