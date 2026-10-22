@@ -178,7 +178,7 @@ def delete_definition(definition_id: str, db: DB) -> Response:
 
 @router.post("/{definition_id}/export", status_code=status.HTTP_202_ACCEPTED, dependencies=[rate_limit("export")])
 def export_definition(definition_id: str, body: DefinitionExport, db: DB, settings: AppSettings) -> dict[str, Any]:
-    """Gera o relatório de uma definição guardada (sem datas fixas, usa as últimas 12 semanas)."""
+    """Gera o relatório de uma definição guardada (sem datas fixas, usa o último mês)."""
     definition = definition_or_404(db, definition_id)
     board_or_404(db, definition["boardId"])
     params = ReportParams.model_validate(definition["params"])

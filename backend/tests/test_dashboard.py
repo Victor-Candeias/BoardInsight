@@ -1,3 +1,8 @@
+from datetime import date
+from zoneinfo import ZoneInfo
+
+from app.services.periods import default_period
+
 URL = "/api/v1/boards/96/dashboard"
 PERIOD = {"from": "2026-08-01", "to": "2026-10-31", "granularity": "month"}
 
@@ -39,6 +44,14 @@ def test_weekly_buckets_are_iso_weeks_in_local_time(synced):
 
 def test_dashboard_default_period_and_validation(synced):
     body = synced.get(URL).json()
-    assert body["period"]["granularity"] == "week" and len(body["timeline"]) in (12, 13)
+    assert body["period"]["granularity"] == "week" and len(body["timeline"]) in (5, 6)
+    assert body["period"]["from"] == default_period(ZoneInfo("Europe/Lisbon"))[0].isoformat()
     assert synced.get(URL, params={"from": "2026-10-01", "to": "2026-09-01"}).status_code == 422
     assert synced.get(URL, params={"from": "2020-01-01", "to": "2026-01-01", "granularity": "day"}).status_code == 422
+
+
+def test_default_period_is_last_month():
+    tz = ZoneInfo("Europe/Lisbon")
+    assert default_period(tz, today=date(2026, 10, 22)) == (date(2026, 9, 22), date(2026, 10, 22))
+    assert default_period(tz, today=date(2026, 3, 31)) == (date(2026, 2, 28), date(2026, 3, 31))
+    assert default_period(tz, today=date(2026, 1, 15)) == (date(2025, 12, 15), date(2026, 1, 15))

@@ -1,0 +1,12 @@
+[Unit]
+Description=BoardInsight sincronização a cada 30 minutos (deploy local)
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=30min
+RandomizedDelaySec=60
+Persistent=true
+Unit=boardinsight-sync.service
+
+[Install]
+WantedBy=timers.target

@@ -179,7 +179,7 @@ export function ReportsPage() {
                 <TR key={d.id}>
                   <TD className="font-medium">{d.name}</TD>
                   <TD className="text-sm text-slate-600">{d.filtersLabel}</TD>
-                  <TD className="text-sm">{d.params.from || d.params.to ? `${d.params.from ?? "…"} a ${d.params.to ?? "…"}` : "Últimas 12 semanas"}</TD>
+                  <TD className="text-sm">{d.params.from || d.params.to ? `${d.params.from ?? "…"} a ${d.params.to ?? "…"}` : "Último mês"}</TD>
                   <TD>
                     <Select
                       aria-label={`Agendamento de ${d.name}`}

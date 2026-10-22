@@ -102,7 +102,7 @@ it("lista exportações e gera PDF com os filtros e o período do URL", async ()
 it("guarda, aplica e gera relatórios a partir de definições", async () => {
   renderWithProviders(<App />, { route: "/reports?status=todo" });
   expect(await screen.findByText("Responsável: Ana; Não bloqueados")).toBeInTheDocument();
-  expect(screen.getByText("Últimas 12 semanas")).toBeInTheDocument();
+  expect(screen.getByText("Último mês")).toBeInTheDocument();
 
   fireEvent.change(screen.getByLabelText("Título"), { target: { value: "Semana" } });
   fireEvent.change(screen.getByLabelText("Nome da definição"), { target: { value: "A fazer" } });

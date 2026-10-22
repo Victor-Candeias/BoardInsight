@@ -1,0 +1,18 @@
+[Unit]
+Description=BoardInsight worker de jobs (sync manual, exportações; deploy local em /opt/BoardInsight)
+After=network-online.target
+
+[Service]
+Type=exec
+WorkingDirectory=/opt/BoardInsight/backend
+Environment=BOARDINSIGHT_ENV_FILE=/opt/BoardInsight/.env
+Environment=PYTHONUNBUFFERED=1
+Environment=EXPORT_DIR=/opt/BoardInsight/data/exports
+ExecStart=/opt/BoardInsight/backend/.venv/bin/python -m app.jobs.worker
+Restart=on-failure
+RestartSec=5
+KillSignal=SIGTERM
+TimeoutStopSec=60
+
+[Install]
+WantedBy=default.target

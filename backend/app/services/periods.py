@@ -29,9 +29,11 @@ class Period:
         return value is not None and self.start_utc <= value < self.end_utc
 
 
-def default_period(tz: ZoneInfo, *, weeks: int = 12, today: date | None = None) -> tuple[date, date]:
+def default_period(tz: ZoneInfo, *, today: date | None = None) -> tuple[date, date]:
+    """Último mês: do mesmo dia do mês anterior (limitado ao último dia desse mês) até hoje."""
     today = today or datetime.now(tz).date()
-    return today - timedelta(weeks=weeks) + timedelta(days=1), today
+    last_of_previous_month = today.replace(day=1) - timedelta(days=1)
+    return last_of_previous_month.replace(day=min(today.day, last_of_previous_month.day)), today
 
 
 def bucket_start(day: date, granularity: Granularity) -> date:

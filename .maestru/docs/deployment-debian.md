@@ -7,7 +7,7 @@ created: 2026-10-21
 description: "Instalação e atualização do BoardInsight no servidor Debian: utilizador dedicado, systemd, Nginx, journald e verificação."
 owner: developer
 tags: [deployment, operations, debian]
-updated: 2026-10-21
+updated: 2026-10-22
 ---
 
 # Deploy no Debian
@@ -135,3 +135,24 @@ journalctl -u 'businessmap-*' -n 50 -o cat # logs JSON, sem segredos
 3. `sudo reboot`.
 4. Sem intervenção manual, esperar ~3 min (o timer corre 2 min após o boot) e correr `sudo deploy/acceptance.sh --after-reboot` → todos OK (exige boot há menos de 60 min).
 5. Abrir o site a partir de outro PC da LAN (`http://<ip-do-servidor>/`) e confirmar dashboards e download da exportação do passo 2.
+
+## Deploy local (systemd de utilizador)
+
+Alternativa sem utilizador dedicado nem Nginx: cópia em `/opt/BoardInsight` (`.env` em `/opt/BoardInsight/.env`) com units de utilizador em `deploy/systemd-user/` (requer `loginctl enable-linger`):
+
+| Unit | Função |
+|------|--------|
+| `boardinsight-api.service` | API em `127.0.0.1:8000` |
+| `boardinsight-web.service` | `vite preview` em `0.0.0.0:5180` (proxy para a API) |
+| `boardinsight-worker.service` | Worker de jobs — **obrigatório**: sem ele os jobs `sync_board`/exportações ficam `pending` |
+| `boardinsight-sync.timer` → `boardinsight-sync.service` | Sync de todos os boards a cada 30 min + retenção + relatórios agendados |
+
+As exportações ficam em `/opt/BoardInsight/data/exports` (`EXPORT_DIR` definido nas units da API, worker e sync).
+
+```bash
+mkdir -p /opt/BoardInsight/data/exports
+cp deploy/systemd-user/boardinsight-* ~/.config/systemd/user/
+systemctl --user daemon-reload
+systemctl --user enable --now boardinsight-api.service boardinsight-web.service boardinsight-worker.service boardinsight-sync.timer
+journalctl --user -u 'boardinsight-*' -f
+```
