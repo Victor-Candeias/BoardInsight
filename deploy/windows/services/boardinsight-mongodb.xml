@@ -1,0 +1,17 @@
+<!-- WinSW 2.x: base de dados MongoDB do BoardInsight. %BASE% = pasta de instalação. -->
+<service>
+  <id>boardinsight-mongodb</id>
+  <name>BoardInsight MongoDB</name>
+  <description>Base de dados MongoDB do BoardInsight (só 127.0.0.1, com autenticação).</description>
+  <executable>%BASE%\mongodb\bin\mongod.exe</executable>
+  <arguments>--dbpath "%ProgramData%\BoardInsight\mongodb" --bind_ip 127.0.0.1 --port 27018 --auth --wiredTigerCacheSizeGB 1</arguments>
+  <startmode>Automatic</startmode>
+  <stoptimeout>60 sec</stoptimeout>
+  <onfailure action="restart" delay="10 sec"/>
+  <resetfailure>1 hour</resetfailure>
+  <logpath>%ProgramData%\BoardInsight\logs</logpath>
+  <log mode="roll-by-size">
+    <sizeThreshold>10240</sizeThreshold>
+    <keepFiles>5</keepFiles>
+  </log>
+</service>

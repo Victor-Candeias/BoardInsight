@@ -1,0 +1,22 @@
+<!-- WinSW 2.x: API FastAPI que também serve o site (FRONTEND_DIST). Host/porta vêm do .env. -->
+<service>
+  <id>boardinsight-api</id>
+  <name>BoardInsight API e site</name>
+  <description>BoardInsight: API e site (Uvicorn); host e porta em %ProgramData%\BoardInsight\.env.</description>
+  <executable>%BASE%\python\python.exe</executable>
+  <arguments>-m app.serve</arguments>
+  <workingdirectory>%BASE%\backend</workingdirectory>
+  <env name="BOARDINSIGHT_ENV_FILE" value="%ProgramData%\BoardInsight\.env"/>
+  <env name="PYTHONUNBUFFERED" value="1"/>
+  <env name="PYTHONUTF8" value="1"/>
+  <depend>boardinsight-mongodb</depend>
+  <startmode>Automatic</startmode>
+  <stoptimeout>20 sec</stoptimeout>
+  <onfailure action="restart" delay="10 sec"/>
+  <resetfailure>1 hour</resetfailure>
+  <logpath>%ProgramData%\BoardInsight\logs</logpath>
+  <log mode="roll-by-size">
+    <sizeThreshold>10240</sizeThreshold>
+    <keepFiles>5</keepFiles>
+  </log>
+</service>

@@ -1,0 +1,22 @@
+<!-- WinSW 2.x: worker de jobs (PDF/XLSX, sync manual, relatórios agendados). -->
+<service>
+  <id>boardinsight-worker</id>
+  <name>BoardInsight worker</name>
+  <description>BoardInsight: worker de jobs (fila na coleção jobs do MongoDB).</description>
+  <executable>%BASE%\python\python.exe</executable>
+  <arguments>-m app.jobs.worker</arguments>
+  <workingdirectory>%BASE%\backend</workingdirectory>
+  <env name="BOARDINSIGHT_ENV_FILE" value="%ProgramData%\BoardInsight\.env"/>
+  <env name="PYTHONUNBUFFERED" value="1"/>
+  <env name="PYTHONUTF8" value="1"/>
+  <depend>boardinsight-mongodb</depend>
+  <startmode>Automatic</startmode>
+  <stoptimeout>40 sec</stoptimeout>
+  <onfailure action="restart" delay="10 sec"/>
+  <resetfailure>1 hour</resetfailure>
+  <logpath>%ProgramData%\BoardInsight\logs</logpath>
+  <log mode="roll-by-size">
+    <sizeThreshold>10240</sizeThreshold>
+    <keepFiles>5</keepFiles>
+  </log>
+</service>

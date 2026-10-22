@@ -9,6 +9,7 @@ import logging
 import os
 import signal
 import socket
+from collections.abc import Callable
 from datetime import timedelta
 from typing import Any
 
@@ -87,6 +88,16 @@ class Worker:
         logger.info("worker terminado", extra={"worker": self.name})
 
 
+def install_stop_handlers(loop: asyncio.AbstractEventLoop, stop: Callable[[], None]) -> None:
+    """SIGTERM/SIGINT param o worker. No Windows o loop não suporta `add_signal_handler` (o WinSW
+    pára o serviço com Ctrl+C); usa-se `signal.signal`, que corre na thread principal."""
+    for sig in (signal.SIGTERM, signal.SIGINT):
+        try:
+            loop.add_signal_handler(sig, stop)
+        except NotImplementedError:
+            signal.signal(sig, lambda *_: loop.call_soon_threadsafe(stop))
+
+
 async def _main(once: bool) -> int:
     settings = get_settings()
     configure_logging(settings)
@@ -97,9 +108,7 @@ async def _main(once: bool) -> int:
         while await worker.run_one():
             pass
         return 0
-    loop = asyncio.get_running_loop()
-    for sig in (signal.SIGTERM, signal.SIGINT):
-        loop.add_signal_handler(sig, worker.stop)
+    install_stop_handlers(asyncio.get_running_loop(), worker.stop)
     await worker.run_forever()
     return 0
 

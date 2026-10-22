@@ -482,7 +482,7 @@ O MVP está concluído quando o novo site, independente do TeamForge, corre no D
 ## 20. Desenvolvimento local (BoardInsight)
 
 A documentação viva está em `.maestru/docs/` (`architecture`, `businessmap-api-validation`,
-`metrics-definitions`, `deployment-debian`); os work-items em `.maestru/tracks/`.
+`metrics-definitions`, `deployment-debian`, `deployment-windows`); os work-items em `.maestru/tracks/`.
 
 ```bash
 cp .env.example .env && chmod 600 .env        # preencher MongoDB e BUSINESSMAP_API_KEY
@@ -493,3 +493,13 @@ scripts/test.sh                                 # testes backend + frontend
 ```
 
 Deploy local completo em `/opt/BoardInsight` (systemd de utilizador): `./deploy-local.sh [--test] [--no-restart]` — ver `deployment-debian`.
+
+## 21. Instalador Windows
+
+Instalador `.exe` autónomo (G7), gerado em Linux: `deploy/windows/build-installer.sh` → `dist/windows/BoardInsight-Setup-<versão>.exe`.
+Inclui Python 3.13 embutido, o site compilado (servido pela própria API, sem Nginx), MongoDB 8.0 (só `127.0.0.1:27018`, com autenticação)
+e três serviços WinSW (`boardinsight-mongodb`, `boardinsight-api`, `boardinsight-worker`), mais a tarefa agendada `BoardInsight\Sync` (30 min).
+Durante a instalação pede o URL da instância (`https://cttv8.kanbanize.com`), a API key (campo mascarado), o board inicial (`96`) e a porta (`8080`).
+
+No PC Windows basta: Windows 10 1809+/Server 2019+ x64, **CPU com AVX** (MongoDB 8.0), 4 GB RAM recomendados, conta de administrador e acesso
+HTTPS ao Businessmap. Detalhes (instalação silenciosa, atualização, operação e build) em `.maestru/docs/deployment-windows.md`.

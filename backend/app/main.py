@@ -11,6 +11,7 @@ from app.api.rate_limit import RateLimiter
 from app.api.v1 import api_router
 from app.core.config import Settings, get_settings
 from app.core.database import get_database
+from app.core.frontend import mount_frontend
 from app.core.indexes import ensure_indexes
 from app.core.logging import configure_logging
 from app.core.middleware import OriginCheckMiddleware, RequestLoggingMiddleware
@@ -56,6 +57,8 @@ def create_app(*, init_db: bool = True, settings: Settings | None = None) -> Fas
     install_error_handlers(app)
     app.include_router(health.router)
     app.include_router(api_router, prefix="/api/v1")
+    if settings.frontend_dist is not None:
+        mount_frontend(app, settings.frontend_dist)
     return app
 
 

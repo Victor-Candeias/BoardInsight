@@ -111,3 +111,25 @@ def test_retention_purges_old_raw_and_exports(db, settings):
     assert run_retention(db, settings) == {"rawPurged": 1, "exportFilesPurged": 1}
     assert "raw" not in db.cards.find_one({"cardId": 1}) and "raw" in db.cards.find_one({"cardId": 2})
     assert not expired.exists() and fresh.exists()
+
+
+def test_stop_handlers_fall_back_to_signal_without_add_signal_handler(monkeypatch):
+    import signal
+
+    from app.jobs.worker import install_stop_handlers
+
+    registered = {}
+    monkeypatch.setattr(signal, "signal", lambda sig, handler: registered.__setitem__(sig, handler))
+
+    class WindowsLoop:
+        def add_signal_handler(self, *_):
+            raise NotImplementedError
+
+        def call_soon_threadsafe(self, callback):
+            callback()
+
+    stopped = []
+    install_stop_handlers(WindowsLoop(), lambda: stopped.append(True))
+    assert set(registered) == {signal.SIGTERM, signal.SIGINT}
+    registered[signal.SIGINT](signal.SIGINT, None)
+    assert stopped == [True]

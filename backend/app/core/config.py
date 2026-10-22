@@ -43,6 +43,8 @@ class Settings(BaseSettings):
     app_log_level: str = "INFO"
     app_timezone: str = "Europe/Lisbon"
     cors_origins: Annotated[list[str], NoDecode] = Field(default_factory=list)
+    # Pasta `frontend/dist` servida pela própria API (instalação Windows, sem Nginx). Vazio = desligado.
+    frontend_dist: Path | None = None
 
     mongodb_uri: SecretStr | None = None
     mongodb_host: str = "127.0.0.1"
@@ -110,7 +112,7 @@ class Settings(BaseSettings):
     def _strip_slash(cls, value: str) -> str:
         return value.rstrip("/")
 
-    @field_validator("businessmap_api_key", "mongodb_uri", "mongodb_password", mode="before")
+    @field_validator("businessmap_api_key", "mongodb_uri", "mongodb_password", "frontend_dist", mode="before")
     @classmethod
     def _empty_is_none(cls, value: object) -> object:
         if isinstance(value, str) and not value.strip():
