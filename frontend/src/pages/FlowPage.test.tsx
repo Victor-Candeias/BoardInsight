@@ -2,7 +2,13 @@ import { fireEvent, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import App from "@/App";
 import { setActiveBoardId } from "@/hooks/useActiveBoard";
+import { expectPageExportedToPdf } from "@/test/pdf";
 import { mockFetch, renderWithProviders } from "@/test/utils";
+
+vi.mock("@/lib/exportPdf", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/exportPdf")>()),
+  exportElementToPdf: vi.fn(async () => {}),
+}));
 
 const summary = { available: true, count: 3, smallSample: true, p50: 10.2, p85: 18.3, p95: 19.5, mean: 12, min: 8.1, max: 20.3 };
 const flow = {
@@ -67,4 +73,10 @@ it("mostra percentis, métricas indisponíveis, aging acima do P85 e dispersão"
 
   expect(requests[0].searchParams.get("ownerUserId")).toBe("11");
   expect(requests[0].searchParams.get("from")).toBe("2026-08-01");
+});
+
+it("exporta a página Fluxo para PDF tal como aparece", async () => {
+  renderWithProviders(<App />, { route: "/flow" });
+  await screen.findByRole("link", { name: "WIP (em curso): 2" });
+  await expectPageExportedToPdf("Fluxo", "fluxo");
 });

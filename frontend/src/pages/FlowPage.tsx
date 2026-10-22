@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Link } from "react-router";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { PERIOD_KEYS } from "@/api/dashboard";
@@ -7,6 +7,7 @@ import { DistributionChart } from "@/charts/DistributionChart";
 import { CycleTrendChart, TimeScatterChart } from "@/charts/FlowCharts";
 import { CardFiltersBar } from "@/components/CardFiltersBar";
 import { DataAsOf } from "@/components/DataAsOf";
+import { ExportPdfButton } from "@/components/ExportPdfButton";
 import { KpiCard } from "@/components/KpiCard";
 import { NoBoard } from "@/components/NoBoard";
 import { PeriodControls } from "@/components/PeriodControls";
@@ -53,6 +54,7 @@ export function FlowPage() {
   const [boardId] = useActiveBoard();
   const { query, setFilter, setFilters, clear } = useCardFilters(EXTRA_KEYS);
   const [metric, setMetric] = useState<"cycleDays" | "leadDays">("cycleDays");
+  const pageRef = useRef<HTMLDivElement>(null);
 
   const flow = useQuery({
     queryKey: ["flow", boardId, query],
@@ -65,10 +67,13 @@ export function FlowPage() {
   const f = flow.data;
 
   return (
-    <div className="space-y-4">
+    <div ref={pageRef} className="space-y-4">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h1 className="text-2xl font-semibold">Fluxo</h1>
-        {f && <DataAsOf dataAsOf={f.dataAsOf} stale={f.stale} />}
+        <div className="flex flex-wrap items-center gap-3">
+          {f && <DataAsOf dataAsOf={f.dataAsOf} stale={f.stale} />}
+          <ExportPdfButton target={pageRef} page="fluxo" disabled={!f} />
+        </div>
       </div>
       <Card>
         <CardContent className="space-y-3 pt-6">
