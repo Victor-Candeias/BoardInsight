@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Link } from "react-router";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { AlertTriangle, CalendarClock, Clock, OctagonAlert, RotateCcw, UserX, Users, type LucideIcon } from "lucide-react";
 import { getAttention, type AttentionItem, type AttentionReason } from "@/api/delivery";
 import { CardFiltersBar } from "@/components/CardFiltersBar";
 import { DataAsOf } from "@/components/DataAsOf";
+import { ExportPdfButton } from "@/components/ExportPdfButton";
 import { NoBoard } from "@/components/NoBoard";
 import { PeriodControls } from "@/components/PeriodControls";
 import { ErrorAlert, Loading } from "@/components/QueryState";
@@ -73,6 +74,7 @@ export function AttentionPage() {
   const [boardId] = useActiveBoard();
   const { query, setFilter, setFilters, clear } = useCardFilters(EXTRA_KEYS);
   const [reason, setReason] = useState<AttentionReason | null>(null);
+  const pageRef = useRef<HTMLDivElement>(null);
 
   const attention = useQuery({
     queryKey: ["attention", boardId, query],
@@ -87,13 +89,16 @@ export function AttentionPage() {
   const ref = a?.agingReference;
 
   return (
-    <div className="space-y-4">
+    <div ref={pageRef} className="space-y-4">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <div>
           <h1 className="text-2xl font-semibold">Atenção</h1>
           <p className="text-sm text-slate-500">O que exige ação hoje: bloqueios, trabalho envelhecido, prazos, WIP e responsáveis.</p>
         </div>
-        {a && <DataAsOf dataAsOf={a.dataAsOf} stale={a.stale} />}
+        <div className="flex flex-wrap items-center gap-3">
+          {a && <DataAsOf dataAsOf={a.dataAsOf} stale={a.stale} />}
+          <ExportPdfButton target={pageRef} page="atencao" disabled={!a} />
+        </div>
       </div>
       <Card>
         <CardContent className="space-y-3 pt-6">

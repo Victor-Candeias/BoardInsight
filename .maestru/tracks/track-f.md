@@ -29,7 +29,7 @@ status: active
 | F2 | Exportação PDF via job assíncrono (MVP) e XLSX | done | 2026-10-21 | developer | high | 2026-10-22 |  | F1, track-c/C4 |  |
 | F3 | Definições de relatórios guardadas | done | 2026-10-21 | developer | medium | 2026-10-22 |  | F1 |  |
 | F4 | Relatórios agendados por sprint | done | 2026-10-21 | developer | low | 2026-10-22 |  | F2, track-c/C4, track-a/A5 |  |
-| H2 | Exportar página Atenção para PDF | backlog | 2026-10-22 |  | medium |  |  |  |  |
+| H2 | Exportar página Atenção para PDF | done | 2026-10-22 |  | medium | 2026-10-22 |  |  |  |
 | H3 | Exportar página Dashboard para PDF | backlog | 2026-10-22 |  | medium |  |  |  |  |
 | H4 | Exportar página Throughput para PDF | backlog | 2026-10-22 |  | medium |  |  |  |  |
 | H5 | Exportar página Fluxo para PDF | backlog | 2026-10-22 |  | medium |  |  |  |  |

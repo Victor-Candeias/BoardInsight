@@ -63,6 +63,7 @@ React + TypeScript + Vite, Tailwind + componentes estilo shadcn/ui, TanStack Que
 Páginas: Atenção (página inicial, `/`), Dashboard (`/dashboard`), Boards, Cartões, Developers, Fluxo, Bloqueios, Sprints, Relatórios.
 O board ativo é escolhido no cabeçalho (guardado no `localStorage`). Menu lateral agrupado (`components/nav.ts`: Visão geral, Fluxo e entrega, Equipa, Dados) com o logótipo; recursos da marca em `frontend/public/brand/` (gerados a partir de `images/BoardInsight.png`) e cores `brand-*`/`accent-500` em `index.css`.
 Modo claro/escuro: botão a seguir a **Atualizar** no cabeçalho (`components/ThemeToggle.tsx`, `lib/theme.ts`), escolha guardada no `localStorage` (`boardinsight.theme`) e aplicada por um script em `index.html` antes do arranque do React. O modo escuro é a classe `dark` em `<html>`: `index.css` inverte as escalas de cor usadas (slate e cores de estado) e o token `surface` (fundo de cartões, menu e campos), em vez de `dark:` em cada componente.
+Exportação de páginas para PDF tal como aparecem (botão **Exportar PDF** em Atenção): `components/ExportPdfButton.tsx` + `lib/exportPdf.ts` (`html-to-image` + `jsPDF`, carregados a pedido, gerado no browser sem passar pelo backend).
 
 ## Collections MongoDB
 
