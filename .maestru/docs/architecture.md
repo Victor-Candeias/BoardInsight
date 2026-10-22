@@ -60,7 +60,7 @@ Nginx :80 ── /            -> frontend/dist (SPA React, PT-PT)
 ## Frontend (`frontend/src`)
 
 React + TypeScript + Vite, Tailwind + componentes estilo shadcn/ui, TanStack Query/Table, Recharts.
-Páginas: Dashboard, Boards, Cartões, Developers, Fluxo, Bloqueios, Sprints, Relatórios.
+Páginas: Atenção (página inicial, `/`), Dashboard (`/dashboard`), Boards, Cartões, Developers, Fluxo, Bloqueios, Sprints, Relatórios.
 O board ativo é escolhido no cabeçalho (guardado no `localStorage`).
 
 ## Collections MongoDB
@@ -122,6 +122,7 @@ Todas as respostas de erro usam `{"error": {"code", "message", "details"?}}` (`a
 - `GET /api/v1/boards/{id}/dashboard`: KPIs do estado atual (com filtros; `total` = não arquivados, `open` = abertos, sem concluídos/arquivados/descartados — é o valor de **Cartões ativos** na UI, que liga a `/cards?open=true`), distribuições (estado, coluna, lane, tipo, prioridade, responsável) e evolução criados vs. concluídos por intervalo. A evolução inclui arquivados e ignora os filtros de estado/datas; devolve `dataAsOf` e `stale`.
 - `GET /api/v1/boards/{id}/throughput` (filtros + período): cartões com `endTime` no período por intervalo (inclui arquivados, exclui descartados), tamanho somado, média por intervalo (exclui intervalos `partial` cortados pelo período) e totais por tipo. O mesmo critério de conclusão (`services/delivery.completed_query`) é usado no dashboard.
 - `GET /api/v1/boards/{id}/deadlines` (filtros): listas de cartões abertos em atraso e a vencer em 7 dias (ordenadas por prazo, máx. 500 com `truncated`, `daysToDeadline`), abertos sem prazo e atrasos por responsável.
+- `GET /api/v1/boards/{id}/attention` (filtros exceto estado/bloqueio/prazos/datas + período `from`/`to`): triagem diária (página **Atenção**). Cartões abertos com motivos `blocked`, `overdue`, `aging` (em curso há mais do que o P85 do cycle time dos concluídos no período), `dueSoon` (7 dias) e `unassigned` (a fazer/em curso sem responsável), ordenados por urgência (`score`; máx. 300 com `truncated`); `summary` por motivo, `people` com WIP acima de `ATTENTION_WIP_PER_PERSON` (3), `agingReference` e cartões reabertos no período.
 - `GET /api/v1/boards/{id}/developers` (filtros exceto responsável/estado/prazos + período): por responsável (inclui "Sem responsável") backlog, a fazer, WIP, bloqueados, em atraso, cartões abertos como co-responsável, idade média/máx. do WIP (`aging_days`; estimada sem data de início), concluídos e série por intervalo. Inclui `disclaimer`: uso pessoal do tech lead, não é avaliação de desempenho.
 - `GET /api/v1/boards/{id}/flow` (filtros exceto estado/prazos + período): `leadTime` e `cycleTime` (P50/P85/P95, média, mín./máx.; `smallSample` < 5; `available=false` + `reason` sem dados) dos concluídos no período, `trend` por intervalo, `points` para dispersão, `wip` atual (total, bloqueados, por coluna/lane/responsável) e `aging` do WIP com limiar = cycle time P85 (`aboveP85`).
 - `GET /api/v1/boards/{id}/cfd?group=status|column` (período em dias; filtros de texto/responsável/tipo/prioridade aplicados aos `cardIds` dos snapshots com os atributos atuais): `series` e `days` com o último snapshot de cada dia local; `snapshotsSince`; `available=false` + `reason` sem histórico.

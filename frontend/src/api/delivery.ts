@@ -220,3 +220,44 @@ export const getBlockers = (boardId: number, query: CardQuery & PeriodQuery) =>
   api<Blockers>(`/api/v1/boards/${boardId}/blockers`, { query });
 export const getQuality = (boardId: number, query: CardQuery & PeriodQuery) =>
   api<Quality>(`/api/v1/boards/${boardId}/quality`, { query });
+
+export type AttentionReason = "blocked" | "overdue" | "aging" | "dueSoon" | "unassigned";
+
+export interface AttentionItem {
+  cardId: number;
+  customId: string | null;
+  title: string | null;
+  status: string;
+  statusLabel: string;
+  columnName: string | null;
+  ownerUserId: number | null;
+  ownerName: string | null;
+  reasons: AttentionReason[];
+  score: number;
+  blockedDays: number | null;
+  blockReason: string | null;
+  ageDays: number | null;
+  ageEstimated: boolean;
+  deadline: string | null;
+  daysToDeadline: number | null;
+}
+
+export interface Attention {
+  boardId: number;
+  dataAsOf: string | null;
+  stale: boolean;
+  period: { from: string; to: string };
+  dueSoonDays: number;
+  wipLimit: number;
+  agingReference: { p85: number | null; count: number; smallSample: boolean };
+  openTotal: number;
+  summary: Record<AttentionReason | "wipOverLimit" | "reopenedCards", number>;
+  reopensAvailable: boolean;
+  total: number;
+  items: AttentionItem[];
+  truncated: boolean;
+  people: { userId: number; name: string; inProgress: number }[];
+}
+
+export const getAttention = (boardId: number, query: CardQuery & PeriodQuery) =>
+  api<Attention>(`/api/v1/boards/${boardId}/attention`, { query });

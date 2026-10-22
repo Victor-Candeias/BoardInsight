@@ -43,7 +43,7 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllGlobals());
 
 it("mostra KPIs com ligação à lista de cartões e gráficos com tabela acessível", async () => {
-  renderWithProviders(<App />, { route: "/?ownerUserId=11" });
+  renderWithProviders(<App />, { route: "/dashboard?ownerUserId=11" });
   const overdue = await screen.findByRole("link", { name: "Em atraso: 1" });
   expect(overdue).toHaveAttribute("href", "/cards?ownerUserId=11&overdue=true");
   expect(screen.getByRole("link", { name: "Cartões ativos: 4" })).toHaveAttribute("href", "/cards?ownerUserId=11&open=true");
@@ -59,7 +59,7 @@ it("mostra KPIs com ligação à lista de cartões e gráficos com tabela acess�
 
 it("envia período e granularidade e avisa quando os dados estão desatualizados", async () => {
   stale = true;
-  renderWithProviders(<App />, { route: "/" });
+  renderWithProviders(<App />, { route: "/dashboard" });
   expect(await screen.findByText(/podem estar desatualizados/)).toBeInTheDocument();
   expect(screen.getByLabelText("De")).toHaveValue("2026-08-01");
   fireEvent.change(screen.getByLabelText("Agrupar por"), { target: { value: "month" } });

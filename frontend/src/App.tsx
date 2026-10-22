@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from "react-router";
 import { Layout } from "@/components/Layout";
+import { AttentionPage } from "@/pages/AttentionPage";
 import { BlockersPage } from "@/pages/BlockersPage";
 import { BoardDetailPage } from "@/pages/BoardDetailPage";
 import { CardDetailPage } from "@/pages/CardDetailPage";
@@ -18,7 +19,8 @@ export default function App() {
   return (
     <Routes>
       <Route element={<Layout />}>
-        <Route index element={<DashboardPage />} />
+        <Route index element={<AttentionPage />} />
+        <Route path="dashboard" element={<DashboardPage />} />
         <Route path="boards" element={<BoardsPage />} />
         <Route path="boards/:boardId" element={<BoardDetailPage />} />
         <Route path="cards" element={<CardsPage />} />

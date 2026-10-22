@@ -7,7 +7,7 @@ created: 2026-10-21
 description: "Definição exata de cada métrica (estados, throughput, lead/cycle time, WIP, aging, CFD, bloqueios, sprints) e dados necessários."
 owner: developer
 tags: [metrics, flow]
-updated: 2026-10-21
+updated: 2026-10-22
 ---
 
 # metrics-definitions: Definições das métricas
@@ -67,6 +67,19 @@ O estado interno deriva da **secção** Businessmap da coluna atual (só leitura
 - **Compromisso**: cartões ativos (`todo`/`in_progress`) no primeiro snapshot da sprint (ids guardados no snapshot).
 - **Burndown**: por dia, cartões do compromisso ainda não concluídos (último snapshot do dia).
 - Sem snapshot no início da sprint → compromisso/burndown indisponíveis (velocity continua disponível).
+
+## Atenção (página inicial)
+
+| Motivo | Definição |
+|---|---|
+| Bloqueado | Cartão aberto com `is_blocked=1` |
+| Em atraso | `deadline` < agora |
+| Aging > P85 | Em curso com aging WIP acima do P85 do cycle time dos cartões concluídos no período (sem concluídos → não avaliado) |
+| Prazo próximo | `deadline` nos próximos 7 dias |
+| Sem responsável | A fazer ou em curso sem `owner_user_id` (backlog não conta) |
+| WIP alto | Pessoa com mais cartões em curso do que `ATTENTION_WIP_PER_PERSON` (3) |
+
+Ordenação por urgência: soma dos pesos dos motivos (bloqueado/em atraso 8, aging 4, prazo próximo 2, sem responsável 1), depois maior aging.
 
 ## Integridade
 

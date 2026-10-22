@@ -29,4 +29,6 @@ status: active
 | D3 | Página Developers (uso pessoal do tech lead) | done | 2026-10-21 | developer | low | 2026-10-21 |  | D1 |  |
 | D4 | Período de pesquisa por omissão: último mês (hoje menos 1 mês) | done | 2026-10-22 |  | medium | 2026-10-22 |  |  |  |
 | D5 | KPI "Cartões ativos" conta só cartões abertos (exclui Done) | done | 2026-10-22 |  | medium | 2026-10-22 |  |  |  |
+| D6 | Página Atenção (triagem diária do tech lead) como página inicial | done | 2026-10-22 |  | high | 2026-10-22 |  |  |  |
+| D7 | Aspeto mais profissional da UI e logótipo BoardInsight | backlog | 2026-10-22 |  | medium |  |  |  |  |
 <!-- /maestru:work-items-list -->

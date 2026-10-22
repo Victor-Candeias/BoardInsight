@@ -63,6 +63,7 @@ class Settings(BaseSettings):
     sync_interval_minutes: int = 30
     sync_lock_ttl_minutes: int = 20
     stale_after_minutes: int = 90
+    attention_wip_per_person: int = Field(default=3, ge=1)
 
     worker_poll_seconds: float = 2.0
     job_timeout_minutes: int = 30
