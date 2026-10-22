@@ -14,7 +14,7 @@ from app.services.periods import Period, bucket_of
 CfdGroup = Literal["status", "column"]
 
 
-def _allowed_ids(db: Database, board_id: int, filters: CardFilters, period: Period, now: datetime) -> set[int] | None:
+def stable_filter_ids(db: Database, board_id: int, filters: CardFilters, period: Period, now: datetime) -> set[int] | None:
     """Ids dos cartões que cumprem os filtros (atributos atuais); None = sem filtros."""
     if not (filters.q or filters.owner_user_id or filters.unassigned or filters.type_id or filters.priority):
         return None
@@ -40,7 +40,7 @@ def build_cfd(
 ) -> dict[str, Any]:
     now = now or utcnow()
     board_id = board["boardId"]
-    allowed = _allowed_ids(db, board_id, filters, period, now)
+    allowed = stable_filter_ids(db, board_id, filters, period, now)
 
     last_per_day: dict[Any, dict[str, Any]] = {}
     cursor = db.board_snapshots.find(

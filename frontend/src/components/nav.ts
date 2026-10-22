@@ -1,4 +1,4 @@
-import { Activity, AreaChart, BarChart3, OctagonAlert, CalendarClock, TrendingUp, LayoutGrid, Users, ListTodo, type LucideIcon } from "lucide-react";
+import { Activity, AreaChart, BarChart3, Flag, OctagonAlert, CalendarClock, TrendingUp, LayoutGrid, Users, ListTodo, type LucideIcon } from "lucide-react";
 
 export interface NavItem {
   to: string;
@@ -13,6 +13,7 @@ export const NAV_ITEMS: NavItem[] = [
   { to: "/flow", label: "Fluxo", icon: Activity },
   { to: "/cfd", label: "CFD", icon: AreaChart },
   { to: "/blockers", label: "Bloqueios", icon: OctagonAlert },
+  { to: "/sprints", label: "Sprints", icon: Flag },
   { to: "/deadlines", label: "Prazos", icon: CalendarClock },
   { to: "/developers", label: "Developers", icon: Users },
   { to: "/boards", label: "Boards", icon: LayoutGrid },
