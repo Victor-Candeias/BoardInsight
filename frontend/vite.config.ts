@@ -5,6 +5,8 @@ import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "vite";
 
 const backend = process.env.BOARDINSIGHT_API ?? "http://127.0.0.1:8000";
+// Manter o Host original: a API compara-o com o Origin para aceitar escritas da mesma origem.
+const target = { target: backend, changeOrigin: false };
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
@@ -15,9 +17,9 @@ export default defineConfig({
     host: "127.0.0.1",
     port: 5180,
     proxy: {
-      "/api": backend,
-      "/health": backend,
-      "/ready": backend,
+      "/api": target,
+      "/health": target,
+      "/ready": target,
     },
   },
   build: {
