@@ -36,4 +36,5 @@ status: active
 | G6 | Script deploy-local.sh na raiz para deploy completo em /opt/BoardInsight | done | 2026-10-22 |  | medium | 2026-10-22 |  |  |  |
 | G7 | Instalador Windows (.exe) completo gerado em Linux | in-progress | 2026-10-22 |  | medium |  |  |  | [G7](../specs/track-g/g7-spec.md) |
 | G8 | App desktop WPF (WebView2) a envolver a SPA no instalador Windows | done | 2026-10-22 |  | medium | 2026-10-22 |  |  | [G8](../specs/track-g/g8-spec.md) |
+| G9 | Autenticação com email e password do domínio (LDAPS) e API só em 127.0.0.1 | backlog | 2026-10-22 |  | high |  |  |  |  |
 <!-- /maestru:work-items-list -->
