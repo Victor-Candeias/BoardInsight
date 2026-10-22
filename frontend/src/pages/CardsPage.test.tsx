@@ -108,6 +108,19 @@ it("aplica filtros, ordenação e paginação na API", async () => {
   expect(lastRequest().get("page")).toBeNull();
 });
 
+it("exporta CSV e JSON com os filtros atuais e sem paginação", async () => {
+  renderWithProviders(<App />, { route: "/cards?status=done&sort=-priority&page=2" });
+  const csv = await screen.findByRole("link", { name: "Exportar CSV" });
+  const csvUrl = new URL(csv.getAttribute("href")!, "http://x");
+  expect(csvUrl.pathname).toBe("/api/v1/boards/96/cards/export");
+  expect(csvUrl.searchParams.get("format")).toBe("csv");
+  expect(csvUrl.searchParams.get("status")).toBe("done");
+  expect(csvUrl.searchParams.get("sort")).toBe("-priority");
+  expect(csvUrl.searchParams.get("page")).toBeNull();
+  const json = screen.getByRole("link", { name: "Exportar JSON" });
+  expect(new URL(json.getAttribute("href")!, "http://x").searchParams.get("format")).toBe("json");
+});
+
 it("mostra o detalhe do cartão com o percurso no board", async () => {
   renderWithProviders(<App />, { route: "/cards/1" });
   expect(await screen.findByRole("heading", { name: "Cartão 1" })).toBeInTheDocument();

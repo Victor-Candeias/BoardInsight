@@ -1,13 +1,16 @@
 from typing import Any
 
 from fastapi import APIRouter, Query
+from fastapi.responses import StreamingResponse
 
 from app.api.deps import DB, AppSettings
 from app.api.errors import ApiError
 from app.api.v1.common import board_or_404
 from app.api.v1.filters import Filters
 from app.models.cards import PRIORITY_LABELS, STATUS_LABELS
+from app.repositories.base import utcnow
 from app.services.card_query import CardEnricher, build_query, sort_spec
+from app.services.export import ExportFormat, csv_stream, export_row, json_stream
 from app.services.history import history_since, label_event
 
 router = APIRouter(prefix="/boards/{board_id}/cards", tags=["cards"])
@@ -64,6 +67,37 @@ def filter_options(board_id: int, db: DB) -> dict[str, Any]:
         "types": [{"value": k, "label": enrich.types.get(k) or f"Tipo {k}"} for k in sorted(t for t in type_ids if t is not None)],
         "owners": sorted(({"value": u, "label": enrich.user(u)} for u in owner_ids), key=lambda o: o["label"].lower()),
     }
+
+
+@router.get("/export")
+def export_cards(
+    board_id: int,
+    db: DB,
+    settings: AppSettings,
+    filters: Filters,
+    format: ExportFormat = "csv",
+    sort: str | None = None,
+) -> StreamingResponse:
+    """Todos os cartões que cumprem os filtros (sem paginação), até `EXPORT_MAX_ROWS`."""
+    board = board_or_404(db, board_id)
+    query = build_query(board_id, filters, settings.tz)
+    try:
+        order = sort_spec(sort)
+    except ValueError:
+        raise ApiError(422, "validation_error", f"ordenação inválida: {sort}") from None
+    total = db.cards.count_documents(query)
+    if total > settings.export_max_rows:
+        raise ApiError(422, "export_too_large", f"{total} cartões excedem o máximo de {settings.export_max_rows}; refine os filtros")
+    now = utcnow()
+    enrich = CardEnricher(db, board, now)
+    rows = (export_row(enrich(c), now) for c in db.cards.find(query, LIST_PROJECTION).sort(order))
+    stamp = now.astimezone(settings.tz).strftime("%Y%m%d-%H%M")
+    filename = f"boardinsight-board{board_id}-cartoes-{stamp}.{format}"
+    headers = {"Content-Disposition": f'attachment; filename="{filename}"', "X-Total-Count": str(total)}
+    if format == "csv":
+        return StreamingResponse(csv_stream(rows, settings.tz), media_type="text/csv; charset=utf-8", headers=headers)
+    meta = {"boardId": board_id, "exportedAt": now, "dataAsOf": board.get("lastSuccessfulSyncAt"), "total": total}
+    return StreamingResponse(json_stream(rows, meta), media_type="application/json", headers=headers)
 
 
 @router.get("/{card_id}")

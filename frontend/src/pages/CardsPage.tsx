@@ -8,8 +8,8 @@ import {
   useReactTable,
   type SortingState,
 } from "@tanstack/react-table";
-import { ArrowDown, ArrowUp, ExternalLink } from "lucide-react";
-import { listCards, type Card } from "@/api/cards";
+import { ArrowDown, ArrowUp, Download, ExternalLink } from "lucide-react";
+import { exportCardsUrl, listCards, type Card } from "@/api/cards";
 import { CardFiltersBar } from "@/components/CardFiltersBar";
 import { CardFlags, PriorityBadge, StatusBadge } from "@/components/CardBadges";
 import { NoBoard } from "@/components/NoBoard";
@@ -114,13 +114,31 @@ export function CardsPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-baseline justify-between">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h1 className="text-2xl font-semibold">Cartões</h1>
-        {cards.data && (
-          <span className="text-sm text-slate-500">
-            {formatNumber(total)} cartões · dados de {formatDateTime(cards.data.dataAsOf)}
-          </span>
-        )}
+        <div className="flex flex-wrap items-center gap-2">
+          {cards.data && (
+            <span className="text-sm text-slate-500">
+              {formatNumber(total)} cartões · dados de {formatDateTime(cards.data.dataAsOf)}
+            </span>
+          )}
+          {boardId !== null && (
+            <>
+              <Button asChild variant="outline" size="sm">
+                <a href={exportCardsUrl(boardId, query, "csv")} download>
+                  <Download className="mr-1 h-4 w-4" aria-hidden="true" />
+                  Exportar CSV
+                </a>
+              </Button>
+              <Button asChild variant="outline" size="sm">
+                <a href={exportCardsUrl(boardId, query, "json")} download>
+                  <Download className="mr-1 h-4 w-4" aria-hidden="true" />
+                  Exportar JSON
+                </a>
+              </Button>
+            </>
+          )}
+        </div>
       </div>
       <Panel>
         <CardContent className="pt-6">

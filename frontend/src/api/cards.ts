@@ -1,4 +1,4 @@
-import { api } from "@/api/client";
+import { api, buildQuery } from "@/api/client";
 
 export interface Card {
   boardId: number;
@@ -116,5 +116,10 @@ export type CardQuery = Partial<Record<(typeof CARD_FILTER_KEYS)[number] | "sort
 
 export const listCards = (boardId: number, query: CardQuery) =>
   api<CardPage>(`/api/v1/boards/${boardId}/cards`, { query });
+/** URL de exportação (CSV/JSON) com os filtros e a ordenação atuais, sem paginação. */
+export function exportCardsUrl(boardId: number, query: CardQuery, format: "csv" | "json"): string {
+  const { page: _page, pageSize: _pageSize, ...rest } = query;
+  return `/api/v1/boards/${boardId}/cards/export${buildQuery({ ...rest, format })}`;
+}
 export const getCard = (boardId: number, cardId: number) => api<CardDetail>(`/api/v1/boards/${boardId}/cards/${cardId}`);
 export const getFilterOptions = (boardId: number) => api<FilterOptions>(`/api/v1/boards/${boardId}/cards/filter-options`);
