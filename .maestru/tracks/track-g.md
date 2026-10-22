@@ -31,4 +31,5 @@ status: active
 | G3 | Rate limit em sync/export e CORS restrito | done | 2026-10-21 | developer | medium | 2026-10-22 |  | track-c/C4, track-f/F1 |  |
 | G4 | Testes de aceitação operacionais (reboot, logs sem credenciais) | done | 2026-10-21 | developer | medium | 2026-10-22 |  | G1 |  |
 | G5 | Deploy local: units systemd de utilizador para worker de jobs e timer de sync | done | 2026-10-22 |  | high | 2026-10-22 |  |  |  |
+| G6 | Script deploy-local.sh na raiz para deploy completo em /opt/BoardInsight | done | 2026-10-22 |  | medium | 2026-10-22 |  |  |  |
 <!-- /maestru:work-items-list -->

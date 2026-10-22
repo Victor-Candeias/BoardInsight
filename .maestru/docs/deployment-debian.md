@@ -149,10 +149,14 @@ Alternativa sem utilizador dedicado nem Nginx: cópia em `/opt/BoardInsight` (`.
 
 As exportações ficam em `/opt/BoardInsight/data/exports` (`EXPORT_DIR` definido nas units da API, worker e sync).
 
+Deploy/atualização completa (a partir do checkout, sem sudo; `/opt/BoardInsight/.env` tem de existir):
+
 ```bash
-mkdir -p /opt/BoardInsight/data/exports
-cp deploy/systemd-user/boardinsight-* ~/.config/systemd/user/
-systemctl --user daemon-reload
-systemctl --user enable --now boardinsight-api.service boardinsight-web.service boardinsight-worker.service boardinsight-sync.timer
+./deploy-local.sh            # copia código, venv + requirements.lock, npm ci (se o lock mudou) + build,
+                             # instala/ativa as units, reinicia API/worker/site e verifica /ready e o site
+./deploy-local.sh --test     # corre scripts/test.sh antes
+./deploy-local.sh --no-restart
 journalctl --user -u 'boardinsight-*' -f
 ```
+
+O script nunca altera `.env` nem `data/`, e escreve o commit instalado em `/opt/BoardInsight/DEPLOYED_COMMIT`.

@@ -491,3 +491,5 @@ cd backend && python3 -m venv .venv && .venv/bin/pip install -r requirements-dev
 cd ../frontend && npm ci && npm run dev         # UI em http://127.0.0.1:5180 (proxy para a API)
 scripts/test.sh                                 # testes backend + frontend
 ```
+
+Deploy local completo em `/opt/BoardInsight` (systemd de utilizador): `./deploy-local.sh [--test] [--no-restart]` — ver `deployment-debian`.
