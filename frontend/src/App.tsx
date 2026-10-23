@@ -10,6 +10,7 @@ import { CfdPage } from "@/pages/CfdPage";
 import { DashboardPage } from "@/pages/DashboardPage";
 import { DeadlinesPage } from "@/pages/DeadlinesPage";
 import { DevelopersPage } from "@/pages/DevelopersPage";
+import { HoursPage } from "@/pages/HoursPage";
 import { FlowPage } from "@/pages/FlowPage";
 import { ReportsPage } from "@/pages/ReportsPage";
 import { SprintsPage } from "@/pages/SprintsPage";
@@ -34,6 +35,7 @@ export default function App() {
           <Route path="sprints" element={<SprintsPage />} />
           <Route path="deadlines" element={<DeadlinesPage />} />
           <Route path="developers" element={<DevelopersPage />} />
+          <Route path="hours" element={<HoursPage />} />
           <Route path="reports" element={<ReportsPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>

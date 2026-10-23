@@ -1,4 +1,4 @@
-import { Activity, AreaChart, BarChart3, BellRing, FileText, Flag, OctagonAlert, CalendarClock, TrendingUp, LayoutGrid, Users, ListTodo, type LucideIcon } from "lucide-react";
+import { Activity, AreaChart, BarChart3, BellRing, Clock, FileText, Flag, OctagonAlert, CalendarClock, TrendingUp, LayoutGrid, Users, ListTodo, type LucideIcon } from "lucide-react";
 
 export interface NavItem {
   to: string;
@@ -32,7 +32,10 @@ export const NAV_GROUPS: NavGroup[] = [
   },
   {
     label: "Equipa",
-    items: [{ to: "/developers", label: "Developers", icon: Users }],
+    items: [
+      { to: "/developers", label: "Developers", icon: Users },
+      { to: "/hours", label: "Horas", icon: Clock },
+    ],
   },
   {
     label: "Dados",

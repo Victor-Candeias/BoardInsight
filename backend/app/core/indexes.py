@@ -46,6 +46,10 @@ def index_specs(settings: Settings) -> list[IndexSpec]:
         IndexSpec("report_exports", [("createdAt", DESCENDING)], "createdAt"),
         IndexSpec("report_exports", [("expiresAt", ASCENDING)], "expiresAt_ttl", {"expireAfterSeconds": 0}),
         IndexSpec("users_cache", [("boardId", ASCENDING), ("userId", ASCENDING)], "board_user_unique", {"unique": True}),
+    IndexSpec("logged_times", [("boardId", ASCENDING), ("loggedTimeId", ASCENDING)], "board_logged_time_unique", {"unique": True}),
+    IndexSpec("logged_times", [("boardId", ASCENDING), ("date", ASCENDING)], "board_date"),
+    IndexSpec("logged_times", [("boardId", ASCENDING), ("userId", ASCENDING), ("date", ASCENDING)], "board_user_date"),
+    IndexSpec("logged_times", [("date", ASCENDING)], "date_ttl", {"expireAfterSeconds": history_ttl}),
         IndexSpec("auth_sessions", [("expiresAt", ASCENDING)], "expiresAt_ttl", {"expireAfterSeconds": 0}),
     ]
 

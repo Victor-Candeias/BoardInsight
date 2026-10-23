@@ -7,7 +7,7 @@ created: 2026-10-22
 description: "Instalador .exe autónomo para Windows (Python embutido, MongoDB, serviços WinSW) gerado em Linux: requisitos, instalação, operação e build."
 owner: developer
 tags: [deployment, operations, windows]
-updated: 2026-10-22
+updated: 2026-10-23
 ---
 
 # Instalador Windows
@@ -79,7 +79,7 @@ em argumentos nem em logs.
 
 ```bat
 set BOARDINSIGHT_SETUP_API_KEY=<api key>
-BoardInsight-Setup-0.2.0.exe /VERYSILENT /SUPPRESSMSGBOXES /URL=https://cttv8.kanbanize.com /BOARD=96 /PORT=8080
+BoardInsight-Setup-0.3.0.exe /VERYSILENT /SUPPRESSMSGBOXES /URL=https://cttv8.kanbanize.com /BOARD=96 /PORT=8080
 ```
 
 Juntar `/TASKS=""` para não criar o atalho no ambiente de trabalho. Os códigos de saída e os avisos ficam no log do Inno

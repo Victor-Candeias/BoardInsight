@@ -5,7 +5,8 @@ strings vazias/datas inválidas passam a `None`. O schema de `transitions` não 
 documentado no OpenAPI; aceitam-se os nomes de campos mais prováveis (validar com A2).
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
+from datetime import date as date_type
 from typing import Any
 
 from pydantic import AliasChoices, BaseModel, ConfigDict, Field, ValidationInfo, field_validator
@@ -111,6 +112,38 @@ class BmCard(BmModel):
     @classmethod
     def _empty_block_reason(cls, value: Any) -> Any:
         return None if value in ([], {}, 0) else value
+
+
+class BmLoggedTime(BmModel):
+    """Entrada de `GET /loggedTime`: `date` é o dia do trabalho; `time` em segundos."""
+
+    logged_time_id: int
+    card_id: int | None = None
+    parent_card_id: int | None = None
+    subtask_id: int | None = None
+    lane_id: int | None = None
+    column_id: int | None = None
+    user_id: int | None = None
+    category_id: int | None = None
+    date: date_type | None = None
+    time: int = 0
+    comment: str | None = None
+    logged_at: datetime | None = None
+
+    @field_validator("subtask_id", "parent_card_id", "category_id", mode="before")
+    @classmethod
+    def _zero_to_none(cls, value: Any) -> Any:
+        return None if value in (0, "0") else value
+
+    @field_validator("time", mode="before")
+    @classmethod
+    def _none_to_zero(cls, value: Any) -> Any:
+        return 0 if value is None else value
+
+    @field_validator("logged_at", mode="after")
+    @classmethod
+    def _naive_is_utc(cls, value: datetime | None) -> datetime | None:
+        return value.replace(tzinfo=UTC) if value is not None and value.tzinfo is None else value
 
 
 class BmColumn(BmModel):

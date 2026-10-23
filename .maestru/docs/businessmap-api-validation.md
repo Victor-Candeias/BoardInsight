@@ -7,7 +7,7 @@ description: Matriz de endpoints/campos da API v2 da instância cttv8, paginaç�
 tags: [api, businessmap, discovery]
 owner: developer
 created: 2026-10-21
-updated: 2026-10-21
+updated: 2026-10-23
 ---
 
 # Validação da API Businessmap
@@ -46,6 +46,12 @@ Base URL: `https://cttv8.kanbanize.com/api/v2`. Validado em 21-10-2026 (work-ite
 - `fields`: `card_id, title, custom_id, owner_user_id, type_id, size, priority, color, deadline, reporter, created_at, revision, last_modified, in_current_position_since, board_id, workflow_id, column_id, lane_id, section, position, last_column_id, last_lane_id, archived_at, discarded_at, is_blocked, block_reason, current_block_time, current_logged_time, current_cycle_time, child_card_stats, first_request_time, first_start_time, first_end_time, last_request_time, last_start_time, last_end_time`, entre outros.
 - `expand`: `custom_fields, tag_ids, co_owner_ids, subtasks, linked_cards, transitions, block_times, logged_times, lead_time_per_column, card_outcomes, last_comment`, entre outros.
 - Cartões arquivados exigem `state=archived` em pedido separado.
+
+## `GET /loggedTime` — usado pela página Horas (D8)
+
+- Campos: `logged_time_id, parent_card_id, card_id, subtask_id, lane_id, column_id, user_id, category_id, date (YYYY-MM-DD), time (segundos), comment, logged_at`.
+- Filtros: `card_ids`, `user_ids`, `category_ids`, `from_date/to_date` (pelo `date`), `logged_from(_date)/logged_to(_date)` (pelo momento do registo), `include_logged_time_for_subtasks=1`, `page`, `per_page` (máx. 1000).
+- **Sem filtro de board:** o BoardInsight filtra por `card_id`/`column_id`/`lane_id` do board. Validado contra o OpenAPI; ainda não confirmado com uma chamada real à instância.
 
 ## Paginação
 

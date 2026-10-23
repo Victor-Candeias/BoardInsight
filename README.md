@@ -144,6 +144,8 @@ businessmap-analytics/
 - Cartões concluídos por período, WIP por responsável e itens envelhecidos.
 - Não tratar contagem de cartões como avaliação individual de desempenho; considerar complexidade e contexto.
 
+**Horas** (`/hours`): tempo registado no Businessmap num período, para um utilizador ou para todos, com opção de incluir ou excluir subtarefas. Totais e médias em `HH:mm` (dia de calendário do registo), gráfico por período e pessoa e lista de registos com ligação ao cartão. Recolhido na sync (`GET /loggedTime`, janela `LOGGED_TIME_SYNC_DAYS`, 35 dias).
+
 ### 5.5. Flow Analytics
 
 - Throughput, WIP, Aging WIP, Lead Time, Cycle Time e percentis (P50/P85/P95).

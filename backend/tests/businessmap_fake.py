@@ -37,6 +37,7 @@ class FakeBusinessmap:
             "discarded": [],
         }
         self.requests: list[httpx.Request] = []
+        self.logged_times: list[dict] = []
         self._failures: dict[str, deque] = defaultdict(deque)
         self.rate_headers = {"X-RateLimit-PerMinute-Remaining": "29", "X-RateLimit-PerHour-Remaining": "599"}
 
@@ -92,7 +93,24 @@ class FakeBusinessmap:
             return self._ok(self.api_limits)
         if path == "/cards":
             return self._cards(q)
+        if path == "/loggedTime":
+            return self._logged_times(q)
         return httpx.Response(404, json={"error": {"message": f"rota simulada inexistente: {path}"}})
+
+    def _logged_times(self, q: httpx.QueryParams) -> httpx.Response:
+        entries = [
+            e
+            for e in self.logged_times
+            if (q.get("include_logged_time_for_subtasks") == "1" or not e.get("subtask_id"))
+            and (not q.get("from_date") or e["date"] >= q["from_date"])
+            and (not q.get("to_date") or e["date"] <= q["to_date"])
+            and (not q.get("logged_from_date") or e["logged_at"][:10] >= q["logged_from_date"])
+        ]
+        per_page = min(int(q.get("per_page", 200)), 1000)
+        page = int(q.get("page", 1))
+        all_pages = max(1, -(-len(entries) // per_page))
+        chunk = entries[(page - 1) * per_page : page * per_page]
+        return self._ok({"pagination": {"all_pages": all_pages, "current_page": page, "results_per_page": per_page}, "data": chunk})
 
     def _cards(self, q: httpx.QueryParams) -> httpx.Response:
         state = q.get("state", "active")

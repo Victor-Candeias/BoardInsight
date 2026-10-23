@@ -30,6 +30,7 @@ from app.repositories.locks import LockRepository
 from app.repositories.sync_runs import SyncRunRepository
 from app.repositories.users import UserCacheRepository
 from app.services.boards import fetch_board_metadata
+from app.services.logged_times import LoggedTimeFetch, fetch_logged_times, store_logged_times
 
 logger = logging.getLogger(__name__)
 
@@ -129,6 +130,7 @@ class SyncService:
         archived, archived_pages, dup_archived = await self._fetch_cards(
             client, board_id, "archived", archived_from=since.strftime("%Y-%m-%dT%H:%M:%SZ")
         )
+        logged = await self._fetch_logged_times(client, board_id, metadata, set(active) | set(archived))
 
         # Todas as páginas foram lidas: a partir daqui pode escrever-se.
         now = utcnow()
@@ -155,6 +157,12 @@ class SyncService:
         missing = self.cards.mark_missing(board_id, sorted(previously_active - seen - set(invalid)), now)
         if users:
             self.users.replace_for_board(board_id, users)
+        logged_stats: dict[str, Any] = {}
+        if isinstance(logged, LoggedTimeFetch):
+            logged_stats = store_logged_times(self.db, board_id, logged, now)
+            self.boards.update(board_id, {"loggedTimeSyncedAt": now, "loggedTimeError": None})
+        elif logged is not None:
+            self.boards.update(board_id, {"loggedTimeError": logged})
 
         hook_stats: dict[str, Any] = {}
         for hook in self.hooks:
@@ -181,8 +189,33 @@ class SyncService:
             "modified": write["modified"],
             "missing": missing,
             "warnings": metadata["metadataWarnings"],
+            **logged_stats,
             **hook_stats,
         }
+
+    async def _fetch_logged_times(
+        self, client: BusinessmapClient, board_id: int, metadata: dict[str, Any], card_ids: set[int]
+    ) -> LoggedTimeFetch | dict[str, str] | None:
+        """Tempo registado (D8). Uma falha não falha o sync: devolve o erro e fica um aviso."""
+        structure = metadata.get("structure") or {}
+        previous = self.boards.get(board_id) or {}
+        last = previous.get("loggedTimeSyncedAt")
+        known = {d["cardId"] for d in self.db.cards.find({"boardId": board_id}, {"cardId": 1})}
+        try:
+            return await fetch_logged_times(
+                client,
+                board_id=board_id,
+                card_ids=card_ids | known,
+                column_ids={c["columnId"] for c in structure.get("columns", [])},
+                lane_ids={lane["laneId"] for lane in structure.get("lanes", [])},
+                today=datetime.now(self.settings.tz).date(),
+                window_days=self.settings.logged_time_sync_days if last else self.settings.retention_history_days,
+                last_synced_at=last,
+            )
+        except BusinessmapError as exc:
+            metadata["metadataWarnings"].append(f"tempo registado indisponível ({exc.code})")
+            logger.warning("tempo registado indisponível", extra={"board_id": board_id, "code": exc.code})
+            return {"code": exc.code, "message": exc.message}
 
     async def sync_all(self, *, trigger: str = "timer") -> list[SyncResult]:
         return [await self.sync_board(board_id, trigger=trigger) for board_id in self.boards.enabled_ids()]

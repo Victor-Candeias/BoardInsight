@@ -7,7 +7,7 @@ created: 2026-10-21
 description: "Componentes, processos, collections MongoDB e fluxo de dados do BoardInsight."
 owner: developer
 tags: [architecture, backend, frontend]
-updated: 2026-10-22
+updated: 2026-10-23
 ---
 
 # architecture: Arquitetura do BoardInsight
@@ -60,7 +60,7 @@ Nginx :80 ── /            -> frontend/dist (SPA React, PT-PT)
 ## Frontend (`frontend/src`)
 
 React + TypeScript + Vite, Tailwind + componentes estilo shadcn/ui, TanStack Query/Table, Recharts.
-Páginas: Atenção (página inicial, `/`), Dashboard (`/dashboard`), Boards, Cartões, Developers, Fluxo, Bloqueios, Sprints, Relatórios.
+Páginas: Atenção (página inicial, `/`), Dashboard (`/dashboard`), Boards, Cartões, Developers, Horas (`/hours`), Fluxo, Bloqueios, Sprints, Relatórios.
 O board ativo é escolhido no cabeçalho (guardado no `localStorage`). Menu lateral agrupado (`components/nav.ts`: Visão geral, Fluxo e entrega, Equipa, Dados) com o logótipo; recursos da marca em `frontend/public/brand/` (gerados a partir de `images/BoardInsight.png`) e cores `brand-*`/`accent-500` em `index.css`.
 Modo claro/escuro: botão a seguir a **Atualizar** no cabeçalho (`components/ThemeToggle.tsx`, `lib/theme.ts`), escolha guardada no `localStorage` (`boardinsight.theme`) e aplicada por um script em `index.html` antes do arranque do React. O modo escuro é a classe `dark` em `<html>`: `index.css` inverte as escalas de cor usadas (slate e cores de estado) e o token `surface` (fundo de cartões, menu e campos), em vez de `dark:` em cada componente.
 Exportação de páginas para PDF tal como aparecem (botão **Exportar PDF** em Atenção, Dashboard, Throughput, Fluxo, Bloqueios e qualidade e Prazos): `components/ExportPdfButton.tsx` + `lib/exportPdf.ts` (`html-to-image` + `jsPDF`, carregados a pedido, gerado no browser sem passar pelo backend).
@@ -79,17 +79,25 @@ Exportação de páginas para PDF tal como aparecem (botão **Exportar PDF** em 
 | `report_definitions` | Definições de relatórios guardadas (índice único `boardId`+`name`) | permanente |
 | `report_exports` | Metadados de ficheiros exportados | 30 dias (TTL + limpeza de ficheiros) |
 | `users_cache` | Nomes dos utilizadores Businessmap por board | atualizado em cada sync |
+| `logged_times` | Tempo registado (`GET /loggedTime`) dos cartões do board, uma entrada por registo (índice único `boardId`+`loggedTimeId`); o board guarda `loggedTimeSyncedAt`/`loggedTimeError` | `RETENTION_HISTORY_DAYS` (TTL pelo `date`) |
 
 ## Fluxo de sincronização
 
 1. Adquirir lock `sync:<boardId>`; criar `sync_run` em execução.
 2. Ler estrutura do board (`currentStructure`), tipos e utilizadores.
-3. Ler todas as páginas de `GET /cards` (ativos) e arquivados recentes (`state=archived`, 183 dias).
+3. Ler todas as páginas de `GET /cards` (ativos) e arquivados recentes (`state=archived`, 183 dias); depois o tempo registado (`GET /loggedTime` com subtarefas, ver abaixo).
 4. Só se **todas** as páginas forem lidas: upserts idempotentes em `cards`, eventos de transição, snapshot, `lastSuccessfulSyncAt`.
 5. Em falha parcial: nada é marcado como removido/concluído; `sync_run` fica com erro.
 6. Libertar lock.
 
 Cartões ativos que deixam de aparecer recebem `missingSince` (nunca são apagados). Ver `services/sync.py`.
+
+### Tempo registado (`services/logged_times.py`)
+
+- `GET /loggedTime` não filtra por board: pede-se a janela `from_date = hoje − LOGGED_TIME_SYNC_DAYS` (35; na primeira sync `RETENTION_HISTORY_DAYS`) com `include_logged_time_for_subtasks=1` e guardam-se só as entradas cujo cartão, coluna ou lane pertence ao board.
+- Depois da primeira sync, um segundo pedido por `logged_from_date` (desde a última recolha − 1 dia) apanha registos lançados com datas antigas (só upsert).
+- Reconciliação: entradas do board com `date` dentro da janela que deixaram de vir na API são apagadas (registos removidos ou editados no Businessmap).
+- A leitura é feita antes de qualquer escrita; uma falha (ex.: 403) não falha a sync: fica `loggedTimeError` no board, aviso no `sync_run` e as entradas anteriores mantêm-se.
 
 ### Histórico (hooks da sync, `services/history.py`)
 
@@ -128,6 +136,7 @@ Todas as respostas de erro usam `{"error": {"code", "message", "details"?}}` (`a
 - `GET /api/v1/boards/{id}/deadlines` (filtros): listas de cartões abertos em atraso e a vencer em 7 dias (ordenadas por prazo, máx. 500 com `truncated`, `daysToDeadline`), abertos sem prazo e atrasos por responsável.
 - `GET /api/v1/boards/{id}/attention` (filtros exceto estado/bloqueio/prazos/datas + período `from`/`to`): triagem diária (página **Atenção**). Cartões abertos com motivos `blocked`, `overdue`, `aging` (em curso há mais do que o P85 do cycle time dos concluídos no período), `dueSoon` (7 dias) e `unassigned` (a fazer/em curso sem responsável), ordenados por urgência (`score`; máx. 300 com `truncated`); `summary` por motivo, `people` com WIP acima de `ATTENTION_WIP_PER_PERSON` (3), `agingReference` e cartões reabertos no período.
 - `GET /api/v1/boards/{id}/developers` (filtros exceto responsável/estado/prazos + período): por responsável (inclui "Sem responsável") backlog, a fazer, WIP, bloqueados, em atraso, cartões abertos como co-responsável, idade média/máx. do WIP (`aging_days`; estimada sem data de início), concluídos e série por intervalo. Inclui `disclaimer`: uso pessoal do tech lead, não é avaliação de desempenho.
+- `GET /api/v1/boards/{id}/hours` (período `from`/`to`/`granularity`, `userId` opcional, `includeSubtasks` por omissão `true`): tempo registado no período pelo campo `date` (dia de calendário do registo), total, registos, cartões, pessoas, dias, `byUser` (horas, registos, cartões, dias, média por dia e série por intervalo), `users` para o seletor, `entries` (máx. 2000 mais recentes com `truncated`), `available`/`warning` e `disclaimer`. A UI apresenta as horas em `HH:mm`.
 - `GET /api/v1/boards/{id}/flow` (filtros exceto estado/prazos + período): `leadTime` e `cycleTime` (P50/P85/P95, média, mín./máx.; `smallSample` < 5; `available=false` + `reason` sem dados) dos concluídos no período, `trend` por intervalo, `points` para dispersão, `wip` atual (total, bloqueados, por coluna/lane/responsável) e `aging` do WIP com limiar = cycle time P85 (`aboveP85`).
 - `GET /api/v1/boards/{id}/cfd?group=status|column` (período em dias; filtros de texto/responsável/tipo/prioridade aplicados aos `cardIds` dos snapshots com os atributos atuais): `series` e `days` com o último snapshot de cada dia local; `snapshotsSince`; `available=false` + `reason` sem histórico.
 - `GET /api/v1/boards/{id}/blockers` (filtros exceto estado/bloqueio/prazos + período): `current` (cartões ativos em aberto bloqueados com motivo, comentário e `currentBlockTimeSeconds`; percentagem do trabalho em aberto; distribuições por motivo/responsável/coluna com dias acumulados) e `history` (bloqueios/desbloqueios observados nas syncs por intervalo e duração dos desbloqueados, `historySince`).

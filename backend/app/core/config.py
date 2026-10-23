@@ -79,6 +79,8 @@ class Settings(BaseSettings):
     retention_history_days: int = 183
     retention_raw_days: int = 30
     retention_sync_runs_days: int = 90
+    # Tempo registado (D8): dias recentes relidos em cada sync para apanhar registos alterados ou apagados.
+    logged_time_sync_days: int = Field(default=35, ge=1)
 
     rate_limit_sync_per_minute: int = 2
     rate_limit_export_per_minute: int = 6

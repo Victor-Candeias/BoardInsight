@@ -62,3 +62,10 @@ export function formatDuration(seconds: number | null | undefined): string {
   if (hours > 0) return mins ? `${hours} h ${mins} min` : `${hours} h`;
   return `${mins} min`;
 }
+
+/** Horas em HH:mm; as horas podem passar de 24 (ex.: `152:30`). */
+export function formatHours(seconds: number | null | undefined): string {
+  if (seconds === null || seconds === undefined || !Number.isFinite(seconds) || seconds < 0) return EMPTY;
+  const minutes = Math.round(seconds / 60);
+  return `${String(Math.floor(minutes / 60)).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}`;
+}

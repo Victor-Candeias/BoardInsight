@@ -331,3 +331,21 @@ class BusinessmapClient:
             async for result in self.iter_card_pages(board_id, card_ids=card_ids[start : start + 100], **kwargs):
                 cards.extend(result.cards)
         return cards
+
+    async def iter_logged_times(self, *, per_page: int = MAX_PER_PAGE, **filters: Any) -> AsyncIterator[list[dict[str, Any]]]:
+        """Páginas de `GET /loggedTime` (não filtra por board: filtros `from_date`, `logged_from_date`, `user_ids`...)."""
+        page = 1
+        while True:
+            data = self._expect(await self.get("/loggedTime", {"page": page, "per_page": min(per_page, MAX_PER_PAGE), **filters}), dict, "/loggedTime")
+            pagination = data.get("pagination")
+            entries = data.get("data")
+            if not isinstance(pagination, dict) or not isinstance(entries, list):
+                raise UnexpectedResponseError("paginação/lista de tempo registado em falta", path="/loggedTime")
+            try:
+                all_pages = int(pagination["all_pages"])
+            except (KeyError, TypeError, ValueError) as exc:
+                raise UnexpectedResponseError("paginação inválida", path="/loggedTime") from exc
+            yield entries
+            if page >= all_pages or not entries:
+                return
+            page += 1

@@ -12,6 +12,7 @@ from app.services.cfd import CfdGroup, build_cfd
 from app.services.delivery import build_deadlines, build_throughput
 from app.services.developers import build_developers
 from app.services.flow import build_flow
+from app.services.logged_times import build_hours
 from app.services.periods import Granularity
 from app.services.quality import build_blockers, build_quality
 
@@ -66,6 +67,23 @@ def developers(
     board = board_or_404(db, board_id)
     period, granularity = period_params(settings, date_from, date_to, granularity)
     return build_developers(db, board, filters, period, granularity) | {"stale": is_stale(board, settings)}
+
+
+@router.get("/hours")
+def hours(
+    board_id: int,
+    db: DB,
+    settings: AppSettings,
+    date_from: Annotated[date | None, Query(alias="from")] = None,
+    date_to: Annotated[date | None, Query(alias="to")] = None,
+    granularity: Granularity = "week",
+    user_id: Annotated[int | None, Query(alias="userId")] = None,
+    include_subtasks: Annotated[bool, Query(alias="includeSubtasks")] = True,
+) -> dict[str, Any]:
+    board = board_or_404(db, board_id)
+    period, granularity = period_params(settings, date_from, date_to, granularity)
+    data = build_hours(db, board, period, granularity, user_id=user_id, include_subtasks=include_subtasks)
+    return data | {"stale": is_stale(board, settings)}
 
 
 @router.get("/flow")

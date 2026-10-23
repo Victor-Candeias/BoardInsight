@@ -19,6 +19,7 @@ status: active
 | D1 | Dashboard geral (KPIs, distribuições, filtros, aviso de dados desatualizados) | backlog | 2026-10-21 | developer | high |  |  | C6 |  |
 | D2 | Throughput e prazos | backlog | 2026-10-21 | developer | medium |  |  | D1 |  |
 | D3 | Página Developers (uso pessoal do tech lead) | backlog | 2026-10-21 | developer | low |  |  | D1 |  |
+| D8 | Página Horas: relatório de tempo registado por período e utilizador | done | 2026-10-23 |  | medium | 2026-10-23 |  |  | [D8](../specs/track-d/d8-spec.md) |
 <!-- /maestru:summary -->
 
 <!-- maestru:work-items-list -->
@@ -31,5 +32,6 @@ status: active
 | D5 | KPI "Cartões ativos" conta só cartões abertos (exclui Done) | done | 2026-10-22 |  | medium | 2026-10-22 |  |  |  |
 | D6 | Página Atenção (triagem diária do tech lead) como página inicial | done | 2026-10-22 |  | high | 2026-10-22 |  |  |  |
 | D7 | Aspeto mais profissional da UI e logótipo BoardInsight | done | 2026-10-22 |  | medium | 2026-10-22 |  |  |  |
+| D8 | Página Horas: relatório de tempo registado por período e utilizador | done | 2026-10-23 |  | medium | 2026-10-23 |  |  | [D8](../specs/track-d/d8-spec.md) |
 | H1 | Implementar dark mode persistente | done | 2026-10-22 |  | medium | 2026-10-22 |  |  |  |
 <!-- /maestru:work-items-list -->
