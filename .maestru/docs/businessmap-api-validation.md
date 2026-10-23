@@ -51,7 +51,8 @@ Base URL: `https://cttv8.kanbanize.com/api/v2`. Validado em 21-10-2026 (work-ite
 
 - Campos: `logged_time_id, parent_card_id, card_id, subtask_id, lane_id, column_id, user_id, category_id, date (YYYY-MM-DD), time (segundos), comment, logged_at`.
 - Filtros: `card_ids`, `user_ids`, `category_ids`, `from_date/to_date` (pelo `date`), `logged_from(_date)/logged_to(_date)` (pelo momento do registo), `include_logged_time_for_subtasks=1`, `page`, `per_page` (máx. 1000).
-- **Sem filtro de board:** o BoardInsight filtra por `card_id`/`column_id`/`lane_id` do board. Validado contra o OpenAPI; ainda não confirmado com uma chamada real à instância.
+- **Sem filtro de board:** o BoardInsight filtra por `card_id`/`column_id`/`lane_id` do board.
+- Resposta: `{pagination, data: [...]}` no topo (diferente de `/cards`, que tem `data: {pagination, data}`); `logged_at` em ISO 8601 com fuso.
 
 ## Paginação
 

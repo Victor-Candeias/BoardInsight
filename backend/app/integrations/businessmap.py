@@ -179,7 +179,8 @@ class BusinessmapClient:
             await self._sleep(60)
             self.rate_limit.per_minute_remaining = None
 
-    async def get(self, path: str, params: dict[str, Any] | None = None) -> Any:
+    async def get(self, path: str, params: dict[str, Any] | None = None, *, envelope: bool = False) -> Any:
+        """Devolve `data` da resposta (ou o corpo inteiro com `envelope=True`, ex.: `/loggedTime` com `pagination` no topo)."""
         params = {k: v for k, v in (params or {}).items() if v is not None}
         attempt = 0
         while True:
@@ -209,7 +210,7 @@ class BusinessmapClient:
                 },
             )
             if response is not None and response.is_success:
-                return self._parse(response, path)
+                return self._parse(response, path, envelope=envelope)
             if response is not None:
                 error_cls = _STATUS_ERRORS.get(response.status_code)
                 if error_cls is None:
@@ -237,14 +238,14 @@ class BusinessmapClient:
         return f"HTTP {response.status_code}" + (f": {message}" if message else "")
 
     @staticmethod
-    def _parse(response: httpx.Response, path: str) -> Any:
+    def _parse(response: httpx.Response, path: str, *, envelope: bool = False) -> Any:
         try:
             body = response.json()
         except ValueError as exc:
             raise UnexpectedResponseError("resposta não é JSON", status=response.status_code, path=path) from exc
         if not isinstance(body, dict) or "data" not in body:
             raise UnexpectedResponseError("resposta sem campo 'data'", status=response.status_code, path=path)
-        return body["data"]
+        return body if envelope else body["data"]
 
     @staticmethod
     def _expect(value: Any, kind: type, path: str) -> Any:
@@ -333,12 +334,18 @@ class BusinessmapClient:
         return cards
 
     async def iter_logged_times(self, *, per_page: int = MAX_PER_PAGE, **filters: Any) -> AsyncIterator[list[dict[str, Any]]]:
-        """Páginas de `GET /loggedTime` (não filtra por board: filtros `from_date`, `logged_from_date`, `user_ids`...)."""
+        """Páginas de `GET /loggedTime` (não filtra por board: filtros `from_date`, `logged_from_date`, `user_ids`...).
+
+        A resposta real tem `pagination` e `data` (lista) no topo; aceita-se também `data: {pagination, data}` como em `/cards`.
+        """
         page = 1
         while True:
-            data = self._expect(await self.get("/loggedTime", {"page": page, "per_page": min(per_page, MAX_PER_PAGE), **filters}), dict, "/loggedTime")
-            pagination = data.get("pagination")
-            entries = data.get("data")
+            body = await self.get("/loggedTime", {"page": page, "per_page": min(per_page, MAX_PER_PAGE), **filters}, envelope=True)
+            data = body.get("data")
+            if isinstance(data, dict):
+                body = data
+            pagination = body.get("pagination")
+            entries = body.get("data")
             if not isinstance(pagination, dict) or not isinstance(entries, list):
                 raise UnexpectedResponseError("paginação/lista de tempo registado em falta", path="/loggedTime")
             try:

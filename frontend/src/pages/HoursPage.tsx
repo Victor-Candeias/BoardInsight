@@ -78,7 +78,7 @@ export function HoursPage() {
       {h && !h.available && (
         <Alert variant="warning">O tempo registado ainda não foi sincronizado para este board. Execute uma sincronização.</Alert>
       )}
-      {h?.warning && <Alert variant="warning">Última recolha do tempo registado falhou: {h.warning}</Alert>}
+      {h?.warning && <Alert variant="warning">{h.warning}</Alert>}
       {!h ? (
         !hours.error && <Loading />
       ) : (

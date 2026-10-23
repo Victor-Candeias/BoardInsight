@@ -110,7 +110,9 @@ class FakeBusinessmap:
         page = int(q.get("page", 1))
         all_pages = max(1, -(-len(entries) // per_page))
         chunk = entries[(page - 1) * per_page : page * per_page]
-        return self._ok({"pagination": {"all_pages": all_pages, "current_page": page, "results_per_page": per_page}, "data": chunk})
+        body = {"pagination": {"all_pages": all_pages, "current_page": page, "results_per_page": per_page}, "data": copy.deepcopy(chunk)}
+        # Formato real de /loggedTime: pagination e data (lista) no topo, ao contrário de /cards.
+        return httpx.Response(200, json=body, headers=self.rate_headers)
 
     def _cards(self, q: httpx.QueryParams) -> httpx.Response:
         state = q.get("state", "active")

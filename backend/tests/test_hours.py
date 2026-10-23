@@ -21,7 +21,7 @@ def entry(lid, user, card, column, days_ago, seconds, *, subtask=None, lane=3001
         "date": day.isoformat(),
         "time": seconds,
         "comment": f"registo {lid}",
-        "logged_at": f"{logged.isoformat()} 18:00:00",
+        "logged_at": f"{logged.isoformat()}T18:00:00+01:00",
     }
 
 
