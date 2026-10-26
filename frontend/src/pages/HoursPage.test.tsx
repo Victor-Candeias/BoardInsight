@@ -70,6 +70,15 @@ beforeEach(() => {
         disclaimer: "Horas registadas no Businessmap.",
       };
     },
+    "GET /api/v1/hours": () => ({
+      period: { from: "2026-10-01", to: "2026-10-31" },
+      userId: null,
+      includeSubtasks: true,
+      boardCount: 2,
+      boards: [{ boardId: 96, name: "Board 96" }, { boardId: 97, name: "Board 97" }],
+      totalSeconds: 7200,
+      rows: [{ date: "2026-10-20", userId: 11, userName: "Ana", seconds: 7200, entries: 2, boards: 2 }],
+    }),
   });
 });
 afterEach(() => vi.unstubAllGlobals());
@@ -96,6 +105,10 @@ it("mostra horas por utilizador e registos, e filtra por utilizador e subtarefas
   expect(rui).toHaveTextContent("Subtarefa");
   expect(rui).toHaveTextContent("00:30");
   expect(within(entries).getByRole("link", { name: "#5002" })).toBeInTheDocument();
+
+  const daily = screen.getByRole("table", { name: "Horas diárias por utilizador em todos os boards" });
+  expect(within(daily).getByText("Ana")).toBeInTheDocument();
+  expect(within(daily).getByText("02:00")).toBeInTheDocument();
 
   expect(requests[0].searchParams.get("userId")).toBeNull();
   expect(requests[0].searchParams.get("includeSubtasks")).toBeNull();

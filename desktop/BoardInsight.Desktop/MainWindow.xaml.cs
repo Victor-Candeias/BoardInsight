@@ -48,13 +48,13 @@ namespace BoardInsight.Desktop
             if (!_webViewReady && !await InitializeWebViewAsync())
                 return;
 
-            ShowBusy("A ligar ao BoardInsight…", "À espera do serviço em " + _settings.BaseUrl + ".");
+            ShowBusy("A ligar ao BoardInsight…", "À espera que inicíe o do serviço.");
             if (!await WaitForServerAsync(startup.Token))
             {
                 if (!startup.IsCancellationRequested)
                     ShowError("Não foi possível ligar ao BoardInsight",
-                        "O serviço não respondeu em " + _settings.BaseUrl + ". Confirme que o serviço " +
-                        "\"BoardInsight API e site\" (boardinsight-api) está a correr em services.msc e tente novamente.");
+                        "O serviço não respondeu. Confirme que os serviços " +
+                        "\"BoardInsight API e site\" (boardinsight-api) estão a correr em services.msc e tente novamente.");
                 return;
             }
 
@@ -163,7 +163,7 @@ namespace BoardInsight.Desktop
             else if (!_pageShown && e.WebErrorStatus != CoreWebView2WebErrorStatus.OperationCanceled)
             {
                 ShowError("Não foi possível abrir o BoardInsight",
-                    "O site em " + _settings.BaseUrl + " não respondeu (" + e.WebErrorStatus + ").");
+                    "O site não respondeu (" + e.WebErrorStatus + ").");
             }
         }
 

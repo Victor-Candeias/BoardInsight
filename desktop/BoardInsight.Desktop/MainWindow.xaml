@@ -6,7 +6,8 @@
         Icon="BoardInsight.ico"
         Width="1440" Height="900" MinWidth="960" MinHeight="600"
         WindowStartupLocation="CenterScreen"
-        Background="{StaticResource Surface}">
+        Background="{StaticResource Surface}"
+        WindowState="Maximized">
     <Grid>
         <wv2:WebView2 x:Name="Browser" Visibility="Hidden" DefaultBackgroundColor="#F8FAFC" />
 

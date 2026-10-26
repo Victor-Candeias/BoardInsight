@@ -16,6 +16,7 @@ from app.integrations.businessmap import BusinessmapClient
 from app.models.businessmap import BmLoggedTime
 from app.services.card_query import CardEnricher
 from app.services.periods import Granularity, Period, bucket_label, bucket_start, buckets
+from app.repositories.users import UserCacheRepository
 
 MAX_ENTRIES = 2000
 DISCLAIMER = (
@@ -216,4 +217,62 @@ def build_hours(
         "entries": [entry_out(e) for e in entries[:MAX_ENTRIES]],
         "truncated": len(entries) > MAX_ENTRIES,
         "disclaimer": DISCLAIMER,
+    }
+
+
+def build_hours_daily_all_boards(
+    db: Database,
+    period: Period,
+    *,
+    user_id: int | None = None,
+    include_subtasks: bool = True,
+) -> dict[str, Any]:
+    """Soma as horas por dia e utilizador de todos os boards configurados e ativos."""
+    boards = list(db.boards.find({"enabled": True}, {"_id": 0, "boardId": 1, "name": 1}).sort("boardId", 1))
+    board_ids = [b["boardId"] for b in boards]
+    query: dict[str, Any] = {"boardId": {"$in": board_ids}, "date": {"$gte": day_value(period.start), "$lte": day_value(period.end)}}
+    if user_id is not None:
+        query["userId"] = user_id
+    if not include_subtasks:
+        query["subtaskId"] = None
+
+    names: dict[int, str] = {}
+    for board_id in board_ids:
+        names.update(UserCacheRepository(db).names(board_id))
+
+    grouped: dict[tuple[date, int | None], dict[str, Any]] = defaultdict(
+        lambda: {"seconds": 0, "entries": 0, "boards": set()}
+    )
+    total = 0
+    for entry in db.logged_times.find(query, {"_id": 0}).sort([("date", -1), ("userId", 1), ("loggedTimeId", -1)]):
+        key = (entry["date"].date(), entry.get("userId"))
+        row = grouped[key]
+        row["seconds"] += entry.get("seconds") or 0
+        row["entries"] += 1
+        row["boards"].add(entry["boardId"])
+        total += entry.get("seconds") or 0
+
+    def user_name(uid: int | None) -> str:
+        return names.get(uid, f"Utilizador {uid}") if uid is not None else "Sem utilizador"
+
+    rows = [
+        {
+            "date": day.isoformat(),
+            "userId": uid,
+            "userName": user_name(uid),
+            "seconds": row["seconds"],
+            "entries": row["entries"],
+            "boards": len(row["boards"]),
+        }
+        for (day, uid), row in grouped.items()
+    ]
+    rows.sort(key=lambda row: (row["date"], -row["seconds"], row["userName"].lower()), reverse=False)
+    return {
+        "period": {"from": period.start.isoformat(), "to": period.end.isoformat()},
+        "userId": user_id,
+        "includeSubtasks": include_subtasks,
+        "boardCount": len(board_ids),
+        "boards": [{"boardId": b["boardId"], "name": b.get("name") or f"Board {b['boardId']}"} for b in boards],
+        "totalSeconds": total,
+        "rows": rows,
     }

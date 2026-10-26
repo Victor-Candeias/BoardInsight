@@ -33,5 +33,6 @@ status: active
 | D6 | Página Atenção (triagem diária do tech lead) como página inicial | done | 2026-10-22 |  | high | 2026-10-22 |  |  |  |
 | D7 | Aspeto mais profissional da UI e logótipo BoardInsight | done | 2026-10-22 |  | medium | 2026-10-22 |  |  |  |
 | D8 | Página Horas: relatório de tempo registado por período e utilizador | done | 2026-10-23 |  | medium | 2026-10-23 |  |  | [D8](../specs/track-d/d8-spec.md) |
+| D9 | Total diário de horas por utilizador entre boards configurados | in-progress | 2026-10-26 | developer | medium |  |  |  |  |
 | H1 | Implementar dark mode persistente | done | 2026-10-22 |  | medium | 2026-10-22 |  |  |  |
 <!-- /maestru:work-items-list -->

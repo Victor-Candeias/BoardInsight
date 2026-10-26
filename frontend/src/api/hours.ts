@@ -52,3 +52,24 @@ export interface Hours {
 }
 
 export const getHours = (boardId: number, query: HoursQuery) => api<Hours>(`/api/v1/boards/${boardId}/hours`, { query });
+
+export interface DailyHoursRow {
+  date: string;
+  userId: number | null;
+  userName: string;
+  seconds: number;
+  entries: number;
+  boards: number;
+}
+
+export interface DailyHours {
+  period: { from: string; to: string };
+  userId: number | null;
+  includeSubtasks: boolean;
+  boardCount: number;
+  boards: { boardId: number; name: string }[];
+  totalSeconds: number;
+  rows: DailyHoursRow[];
+}
+
+export const getDailyHours = (query: HoursQuery) => api<DailyHours>("/api/v1/hours", { query });

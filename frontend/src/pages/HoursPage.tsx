@@ -1,7 +1,7 @@
 import { useRef } from "react";
 import { Link } from "react-router";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { getHours, HOURS_KEYS, type HoursQuery } from "@/api/hours";
+import { getDailyHours, getHours, HOURS_KEYS, type HoursQuery } from "@/api/hours";
 import { HoursChart } from "@/charts/HoursChart";
 import { DataAsOf } from "@/components/DataAsOf";
 import { ExportPdfButton } from "@/components/ExportPdfButton";
@@ -30,6 +30,12 @@ export function HoursPage() {
   const hours = useQuery({
     queryKey: ["hours", boardId, query],
     queryFn: () => getHours(boardId!, query),
+    enabled: boardId !== null,
+    placeholderData: keepPreviousData,
+  });
+  const dailyHours = useQuery({
+    queryKey: ["daily-hours-all-boards", query],
+    queryFn: () => getDailyHours(query),
     enabled: boardId !== null,
     placeholderData: keepPreviousData,
   });
@@ -142,6 +148,45 @@ export function HoursPage() {
             </CardContent>
           </Card>
           <HoursChart data={h} />
+          {dailyHours.data && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Horas diárias por utilizador — todos os boards</CardTitle>
+              </CardHeader>
+              <CardContent className="overflow-x-auto">
+                <p className="mb-3 text-sm text-slate-500">
+                  Total agregado dos {formatNumber(dailyHours.data.boardCount)} boards configurados e ativos.
+                </p>
+                <Table aria-label="Horas diárias por utilizador em todos os boards">
+                  <THead>
+                    <TR>
+                      <TH>Data</TH>
+                      <TH>Utilizador</TH>
+                      <TH>Horas</TH>
+                      <TH>Registos</TH>
+                      <TH>Boards</TH>
+                    </TR>
+                  </THead>
+                  <TBody>
+                    {dailyHours.data.rows.length === 0 && (
+                      <TR>
+                        <TD colSpan={5} className="py-6 text-center text-slate-500">Sem horas registadas no período.</TD>
+                      </TR>
+                    )}
+                    {dailyHours.data.rows.map((row) => (
+                      <TR key={`${row.date}-${row.userId ?? "none"}`}>
+                        <TD className="whitespace-nowrap">{formatDate(row.date)}</TD>
+                        <TD>{row.userName}</TD>
+                        <TD className="font-mono">{formatHours(row.seconds)}</TD>
+                        <TD>{formatNumber(row.entries)}</TD>
+                        <TD>{formatNumber(row.boards)}</TD>
+                      </TR>
+                    ))}
+                  </TBody>
+                </Table>
+              </CardContent>
+            </Card>
+          )}
           <Card>
             <CardHeader>
               <CardTitle>Registos</CardTitle>

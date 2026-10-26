@@ -3,6 +3,8 @@ from datetime import datetime, timedelta
 
 import pytest
 
+from app.services.logged_times import day_value
+
 URL = "/api/v1/boards/96/hours"
 
 
@@ -109,3 +111,26 @@ def test_hours_report_by_user_period_and_subtasks(board, db, settings, client_fa
     older = board.get(URL, params={"from": (today - timedelta(days=60)).isoformat(), "to": today.isoformat()}).json()
     assert older["totalSeconds"] == 12300
     assert board.get("/api/v1/boards/1/hours").status_code == 404
+
+
+def test_daily_hours_aggregate_enabled_boards(board, db, settings, client_factory, today):
+    sync(db, settings, client_factory)
+    db.boards.insert_one({"boardId": 97, "name": "Board 97", "enabled": True})
+    db.users_cache.insert_many([
+        {"boardId": 97, "userId": 11, "name": "Ana"},
+        {"boardId": 97, "userId": 12, "name": "Rui"},
+    ])
+    db.logged_times.insert_many([
+        {"boardId": 97, "loggedTimeId": 101, "userId": 11, "date": day_value(today), "seconds": 1800, "subtaskId": None},
+        {"boardId": 97, "loggedTimeId": 102, "userId": 12, "date": day_value(today), "seconds": 900, "subtaskId": 5001},
+    ])
+    response = board.get("/api/v1/hours", params={"from": today.isoformat(), "to": today.isoformat()})
+    assert response.status_code == 200
+    body = response.json()
+    rows = {(row["date"], row["userId"]): row for row in body["rows"]}
+    assert body["boardCount"] == 2
+    assert rows[(today.isoformat(), 11)]["seconds"] == 1800
+    assert rows[(today.isoformat(), 12)]["seconds"] == 1800
+
+    without_subtasks = board.get("/api/v1/hours", params={"from": today.isoformat(), "to": today.isoformat(), "includeSubtasks": "false"}).json()
+    assert {(row["userId"], row["seconds"]) for row in without_subtasks["rows"]} == {(11, 1800)}
