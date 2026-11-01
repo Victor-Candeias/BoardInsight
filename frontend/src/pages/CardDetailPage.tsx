@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { Link, useParams } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, ExternalLink } from "lucide-react";
-import { getCard } from "@/api/cards";
+import { getCard, getCardComments } from "@/api/cards";
 import { CardFlags, PriorityBadge, StatusBadge } from "@/components/CardBadges";
 import { NoBoard } from "@/components/NoBoard";
 import { ErrorAlert, Loading } from "@/components/QueryState";
@@ -30,6 +30,12 @@ export function CardDetailPage() {
   const card = useQuery({
     queryKey: ["card", boardId, cardId],
     queryFn: () => getCard(boardId!, cardId),
+    enabled: boardId !== null,
+  });
+
+  const comments = useQuery({
+    queryKey: ["card-comments", boardId, cardId],
+    queryFn: () => getCardComments(boardId!, cardId),
     enabled: boardId !== null,
   });
 
@@ -89,6 +95,32 @@ export function CardDetailPage() {
             <Field label="Arquivado">{c.archivedAt ? formatDateTime(c.archivedAt) : null}</Field>
             <Field label="Dados de">{formatDateTime(c.dataAsOf)}</Field>
           </dl>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>Comentários</CardTitle>
+          <CardDescription>Lidos em direto do Businessmap.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {comments.isLoading ? (
+            <Loading />
+          ) : comments.error ? (
+            <ErrorAlert error={comments.error} />
+          ) : !comments.data?.items.length ? (
+            <p className="text-sm text-slate-500">Sem comentários.</p>
+          ) : (
+            <ul className="space-y-3">
+              {comments.data.items.map((cm, i) => (
+                <li key={cm.commentId ?? i} className="rounded-md border border-slate-200 p-3">
+                  <div className="text-xs text-slate-500">
+                    {cm.authorName ?? "Desconhecido"} · {formatDateTime(cm.createdAt)}
+                  </div>
+                  <p className="mt-1 whitespace-pre-wrap text-sm">{cm.text}</p>
+                </li>
+              ))}
+            </ul>
+          )}
         </CardContent>
       </Card>
       <Card>

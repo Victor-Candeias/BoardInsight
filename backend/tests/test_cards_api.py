@@ -91,3 +91,18 @@ def test_filter_options(synced):
     assert {o["value"] for o in opts["lanes"]} == {3001, 3002}
     assert {o["value"] for o in opts["types"]} == {41, 42, 43}
     assert len(opts["priorities"]) == 4
+
+
+def test_card_comments_live_from_businessmap(synced, fake_bm):
+    user_id = fake_bm.users[0]["user_id"]
+    fake_bm.comments[5003] = [
+        {"comment_id": 3, "type": "plain", "text": "<p><span style=\"font-size:11pt;\">Linha 1</span></p><ul><li>a</li><li>b</li></ul>", "created_at": "2026-09-03T10:00:00Z"},
+        {"comment_id": 2, "type": "html", "text": "<p>Segundo &amp; último</p>", "created_at": "2026-09-02T10:00:00Z", "author": {"type": "user", "value": user_id}},
+        {"comment_id": 1, "type": "plain", "text": "Primeiro", "created_at": "2026-09-01T10:00:00Z", "author": {"type": "user", "value": user_id}},
+    ]
+    body = synced.get(f"{URL}/5003/comments").json()
+    assert body["total"] == 3
+    assert [c["text"] for c in body["items"]] == ["Primeiro", "Segundo & último", "Linha 1\n• a\n• b"]
+    assert body["items"][0]["authorName"]
+    assert synced.get(f"{URL}/5001/comments").json() == {"items": [], "total": 0}
+    assert synced.get(f"{URL}/9999/comments").status_code == 404

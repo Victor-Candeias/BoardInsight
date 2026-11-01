@@ -37,6 +37,7 @@ class FakeBusinessmap:
             "discarded": [],
         }
         self.requests: list[httpx.Request] = []
+        self.comments: dict[int, list[dict]] = {}
         self.logged_times: list[dict] = []
         self._failures: dict[str, deque] = defaultdict(deque)
         self.rate_headers = {"X-RateLimit-PerMinute-Remaining": "29", "X-RateLimit-PerHour-Remaining": "599"}
@@ -93,6 +94,8 @@ class FakeBusinessmap:
             return self._ok(self.api_limits)
         if path == "/cards":
             return self._cards(q)
+        if m := re.fullmatch(r"/cards/(\d+)/comments", path):
+            return self._ok(self.comments.get(int(m[1]), []))
         if path == "/loggedTime":
             return self._logged_times(q)
         return httpx.Response(404, json={"error": {"message": f"rota simulada inexistente: {path}"}})

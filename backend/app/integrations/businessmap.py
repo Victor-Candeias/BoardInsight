@@ -283,6 +283,10 @@ class BusinessmapClient:
     async def get_api_limits(self) -> list[dict[str, Any]]:
         return self._expect(await self.get("/apiLimits"), list, "/apiLimits")
 
+    async def get_card_comments(self, card_id: int) -> list[dict[str, Any]]:
+        path = f"/cards/{card_id}/comments"
+        return self._expect(await self.get(path), list, path)
+
     async def list_cards(
         self,
         board_id: int,

@@ -72,6 +72,9 @@ Source: "{#StageDir}\winsw\WinSW-x64.exe"; DestDir: "{app}"; DestName: "boardins
 Source: "{#StageDir}\redist\vc_redist.x64.exe"; DestDir: "{tmp}"; Flags: deleteafterinstall
 
 [InstallDelete]
+; Código antigo (incl. bytecode unchecked-hash, que nunca é revalidado) não pode sobreviver a uma atualização.
+Type: filesandordirs; Name: "{app}\backend"
+Type: filesandordirs; Name: "{app}\python"
 ; Atalho de versões anteriores ao G8 (substituído por "BoardInsight no browser").
 Type: files; Name: "{group}\Abrir o BoardInsight.url"
 
