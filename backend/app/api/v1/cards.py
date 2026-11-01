@@ -1,9 +1,11 @@
+import html
+import re
 from typing import Any
 
 from fastapi import APIRouter, Query
 from fastapi.responses import StreamingResponse
 
-from app.api.deps import DB, AppSettings
+from app.api.deps import DB, AppSettings, BmClientFactory
 from app.api.errors import ApiError
 from app.api.v1.common import board_or_404
 from app.api.v1.filters import Filters
@@ -99,6 +101,44 @@ def export_cards(
         return StreamingResponse(csv_stream(rows, settings.tz), media_type="text/csv; charset=utf-8", headers=headers)
     meta = {"boardId": board_id, "exportedAt": now, "dataAsOf": board.get("lastSuccessfulSyncAt"), "total": total}
     return StreamingResponse(json_stream(rows, meta), media_type="application/json", headers=headers)
+
+
+def _comment_text(comment: dict[str, Any]) -> str:
+    text = comment.get("text") or ""
+    if not re.search(r"</?[a-zA-Z][^>]*>", text):
+        return text.strip()
+    text = re.sub(r"(?is)<(script|style)[^>]*>.*?</\1>", "", text)
+    text = re.sub(r"(?i)<li[^>]*>", "• ", text)
+    text = re.sub(r"(?i)<br\s*/?>|</(p|div|li|h[1-6]|tr|ul|ol)>", "\n", text)
+    text = html.unescape(re.sub(r"<[^>]+>", "", text)).replace("\xa0", " ")
+    return re.sub(r"\n{3,}", "\n\n", re.sub(r"[ \t]+\n", "\n", text)).strip()
+
+
+@router.get("/{card_id}/comments")
+async def get_card_comments(board_id: int, card_id: int, db: DB, settings: AppSettings, client_factory: BmClientFactory) -> dict[str, Any]:
+    """Comentários do cartão, lidos em direto do Businessmap (não são guardados na base de dados)."""
+    board = board_or_404(db, board_id)
+    if db.cards.count_documents({"boardId": board_id, "cardId": card_id}, limit=1) == 0:
+        raise ApiError(404, "card_not_found", f"cartão {card_id} não encontrado no board {board_id}")
+    settings.require_api_key()
+    async with client_factory() as client:
+        raw = await client.get_card_comments(card_id)
+    enrich = CardEnricher(db, board)
+    items = []
+    for c in raw:
+        author = c.get("author") if isinstance(c.get("author"), dict) else {}
+        user_id = author.get("value") if author.get("type", "user") == "user" and isinstance(author.get("value"), int) else None
+        items.append(
+            {
+                "commentId": c.get("comment_id"),
+                "text": _comment_text(c),
+                "authorName": enrich.user(user_id) if user_id is not None else None,
+                "createdAt": c.get("created_at"),
+                "lastModified": c.get("last_modified"),
+            }
+        )
+    items.sort(key=lambda i: i["createdAt"] or "")
+    return {"items": items, "total": len(items)}
 
 
 @router.get("/{card_id}")

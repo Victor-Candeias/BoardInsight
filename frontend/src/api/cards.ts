@@ -123,4 +123,14 @@ export function exportCardsUrl(boardId: number, query: CardQuery, format: "csv" 
   return `/api/v1/boards/${boardId}/cards/export${buildQuery({ ...rest, format })}`;
 }
 export const getCard = (boardId: number, cardId: number) => api<CardDetail>(`/api/v1/boards/${boardId}/cards/${cardId}`);
+export interface CardComment {
+  commentId: number | null;
+  text: string;
+  authorName: string | null;
+  createdAt: string | null;
+  lastModified: string | null;
+}
+
+export const getCardComments = (boardId: number, cardId: number) =>
+  api<{ items: CardComment[]; total: number }>(`/api/v1/boards/${boardId}/cards/${cardId}/comments`);
 export const getFilterOptions = (boardId: number) => api<FilterOptions>(`/api/v1/boards/${boardId}/cards/filter-options`);

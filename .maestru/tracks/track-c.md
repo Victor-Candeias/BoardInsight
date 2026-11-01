@@ -34,4 +34,5 @@ status: active
 | C5 | API e página Boards (trocar board ativo, test-connection, mapeamento de colunas só leitura) | done | 2026-10-21 | developer | high | 2026-10-21 |  | track-b/B4, C1 |  |
 | C6 | API e página Cartões (filtros, paginação, detalhe) | done | 2026-10-21 | developer | high | 2026-10-21 |  | C3 |  |
 | C7 | Credenciais Businessmap via BUSINESSMAP_BASE_URL/API_KEY/BOARD_ID | done | 2026-10-22 |  | medium | 2026-10-22 |  |  |  |
+| C9 | Comentários no detalhe do cartão | done | 2026-11-01 |  | medium | 2026-11-01 |  |  |  |
 <!-- /maestru:work-items-list -->
