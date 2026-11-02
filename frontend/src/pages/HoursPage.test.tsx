@@ -77,7 +77,13 @@ beforeEach(() => {
       boardCount: 2,
       boards: [{ boardId: 96, name: "Board 96" }, { boardId: 97, name: "Board 97" }],
       totalSeconds: 7200,
-      rows: [{ date: "2026-10-20", userId: 11, userName: "Ana", seconds: 7200, entries: 2, boards: 2 }],
+      rows: [
+        { date: "2026-10-01", userId: 11, userName: "Ana", seconds: 3600, entries: 1, boards: 1 },
+        { date: "2026-10-03", userId: 12, userName: "Rui", seconds: 3600, entries: 1, boards: 1 },
+        { date: "2026-10-04", userId: 11, userName: "Ana", seconds: 3600, entries: 1, boards: 1 },
+        { date: "2026-10-10", userId: 12, userName: "Rui", seconds: 3600, entries: 1, boards: 1 },
+        { date: "2026-10-11", userId: 11, userName: "Ana", seconds: 3600, entries: 1, boards: 1 },
+      ],
     }),
   });
 });
@@ -107,8 +113,14 @@ it("mostra horas por utilizador e registos, e filtra por utilizador e subtarefas
   expect(within(entries).getByRole("link", { name: "#5002" })).toBeInTheDocument();
 
   const daily = screen.getByRole("table", { name: "Horas diárias por utilizador em todos os boards" });
-  expect(within(daily).getByText("Ana")).toBeInTheDocument();
-  expect(within(daily).getByText("02:00")).toBeInTheDocument();
+  expect(within(daily).getAllByText("Ana")).toHaveLength(3);
+  expect(within(daily).getAllByText("01:00")).toHaveLength(5);
+  const dailyRows = within(daily).getAllByRole("row").slice(1);
+  expect(dailyRows[0]).not.toHaveClass("bg-slate-50");
+  expect(dailyRows[1]).not.toHaveClass("bg-slate-50");
+  expect(dailyRows[2]).toHaveClass("bg-slate-50");
+  expect(dailyRows[3]).toHaveClass("bg-slate-50");
+  expect(dailyRows[4]).not.toHaveClass("bg-slate-50");
 
   expect(requests[0].searchParams.get("userId")).toBeNull();
   expect(requests[0].searchParams.get("includeSubtasks")).toBeNull();

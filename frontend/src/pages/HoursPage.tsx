@@ -18,6 +18,14 @@ import { useCardFilters } from "@/hooks/useCardFilters";
 import { formatDate, formatHours, formatNumber } from "@/lib/format";
 
 const EXTRA_KEYS = [...HOURS_KEYS];
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+function dailyHoursWeekIndex(date: string, periodStart: string): number {
+  const start = Date.parse(`${periodStart}T00:00:00Z`);
+  const current = Date.parse(`${date}T00:00:00Z`);
+  const dayOffset = Math.max(0, Math.floor((current - start) / DAY_MS));
+  return dayOffset < 3 ? 0 : 1 + Math.floor((dayOffset - 3) / 7);
+}
 
 export function HoursPage() {
   const [boardId] = useActiveBoard();
@@ -174,7 +182,10 @@ export function HoursPage() {
                       </TR>
                     )}
                     {dailyHours.data.rows.map((row) => (
-                      <TR key={`${row.date}-${row.userId ?? "none"}`}>
+                      <TR
+                        key={`${row.date}-${row.userId ?? "none"}`}
+                        className={dailyHoursWeekIndex(row.date, dailyHours.data.period.from) % 2 === 1 ? "bg-slate-50" : undefined}
+                      >
                         <TD className="whitespace-nowrap">{formatDate(row.date)}</TD>
                         <TD>{row.userName}</TD>
                         <TD className="font-mono">{formatHours(row.seconds)}</TD>
